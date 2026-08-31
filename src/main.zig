@@ -3,7 +3,6 @@ const rl = @import("raylib");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const all_chars = @import("chars.zig").all_chars;
 const Title = @import("title.zig");
 const Select = @import("select.zig");
 const Play = @import("Play.zig");
@@ -92,10 +91,7 @@ pub fn main(init: std.process.Init) !void {
     if (comptime builtin.os.tag == .windows)
         windows.disableIme();
 
-    const codepoints = try rl.loadCodepoints(all_chars);
-    // font = try rl.loadFontEx("resources/KosugiMaru-Regular.ttf", 48, codepoints);
     font = try rl.loadFont("resources/KosugiMaru-Regular.fnt");
-    rl.unloadCodepoints(codepoints);
     defer rl.unloadFont(font);
 
     rl.setTextureFilter(font.texture, .bilinear);
