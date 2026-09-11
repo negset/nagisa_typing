@@ -59,6 +59,11 @@ pub fn build(b: *std.Build) !void {
             .name = "nagisa_typing",
             .root_module = exe_mod,
         });
+
+        if (optimize != .Debug) {
+            exe.subsystem = .windows;
+        }
+
         b.installArtifact(exe);
 
         const run_cmd = b.addRunArtifact(exe);
