@@ -59,8 +59,11 @@ pub fn main(init: std.process.Init) !void {
     rl.initWindow(screen_width, screen_height, "渚タイピング");
     defer rl.closeWindow();
 
-    font = try rl.loadFont("resources/KosugiMaru-Regular.fnt");
-    defer rl.unloadFont(font);
+    rl.initAudioDevice();
+    defer rl.closeAudioDevice();
+
+    font = try rl.loadFont("resources/font/KosugiMaru.fnt");
+    defer font.unload();
 
     rl.setTextureFilter(font.texture, .bilinear);
     rl.setTextLineSpacing(20);
@@ -71,12 +74,12 @@ pub fn main(init: std.process.Init) !void {
         windows.disableIme();
 
     title = try .init(gpa);
-    defer title.deinit(gpa);
     select = try .init(gpa);
-    defer select.deinit(gpa);
     play = try .init(gpa);
-    defer play.deinit(gpa);
     result = try .init(gpa);
+    defer title.deinit(gpa);
+    defer select.deinit(gpa);
+    defer play.deinit(gpa);
     defer result.deinit(gpa);
 
     defer current_scene.leave(gpa);

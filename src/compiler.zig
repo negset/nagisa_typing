@@ -301,15 +301,19 @@ const table = [_]Entry{
     .{ .codepoint = 0x3092, .keys = &.{"wo"} },
     .{ .codepoint = 0x3093, .keys = &.{ "n\u{0}", "nn", "n'", "xn" } },
 
-    // ヴ
-    .{ .codepoint = 0x30f4, .keys = &.{"vu"} },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3041, .keys = &.{"va"} },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3043, .keys = &.{ "vi", "vyi" } },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3047, .keys = &.{ "ve", "vye" } },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3049, .keys = &.{"vo"} },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3083, .keys = &.{"vya"} },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3085, .keys = &.{"vyu"} },
-    .{ .codepoint = 0x30f4, .codepoint2 = 0x3087, .keys = &.{"vyo"} },
+    // ゔ
+    .{ .codepoint = 0x3094, .keys = &.{"vu"} },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3041, .keys = &.{"va"} },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3043, .keys = &.{ "vi", "vyi" } },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3047, .keys = &.{ "ve", "vye" } },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3049, .keys = &.{"vo"} },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3083, .keys = &.{"vya"} },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3085, .keys = &.{"vyu"} },
+    .{ .codepoint = 0x3094, .codepoint2 = 0x3087, .keys = &.{"vyo"} },
+
+    // ゕゖ
+    .{ .codepoint = 0x3095, .keys = &.{ "lka", "xka" } },
+    .{ .codepoint = 0x3096, .keys = &.{ "lke", "xke" } },
 
     // 数字
     .{ .codepoint = 0xff10, .keys = &.{"0"} },

@@ -60,7 +60,7 @@ pub const Exercise = struct {
     }
 };
 
-pub const Level = enum { basic, normal, expert };
+pub const Level = enum(u8) { basic, normal, expert };
 
 // 2 ~ 6
 const basic: []const Pair = &.{
@@ -92,7 +92,7 @@ const basic: []const Pair = &.{
     .{ .display = "マイナンバー", .kana = "まいなんばー" },
     .{ .display = "ブリとハマチ", .kana = "ぶりとはまち" },
     .{ .display = "好き嫌い", .kana = "すききらい" },
-    .{ .display = "ヴァイオリン", .kana = "ヴぁいおりん" },
+    .{ .display = "ヴァイオリン", .kana = "ゔぁいおりん" },
     .{ .display = "凧あげ", .kana = "たこあげ" },
     .{ .display = "スコッチ", .kana = "すこっち" },
     .{ .display = "鍵", .kana = "かぎ" },
@@ -159,7 +159,7 @@ const normal: []const Pair = &.{
     .{ .display = "利用者の声", .kana = "りようしゃのこえ" },
     .{ .display = "なすの煮びたし", .kana = "なすのにびたし" },
     .{ .display = "労働基準法", .kana = "ろうどうきじゅんほう" },
-    .{ .display = "ヴィンテージ加工", .kana = "ヴぃんてーじかこう" },
+    .{ .display = "ヴィンテージ加工", .kana = "ゔぃんてーじかこう" },
     .{ .display = "煙突のついた家", .kana = "えんとつのついたいえ" },
     .{ .display = "コーヒーより紅茶", .kana = "こーひーよりこうちゃ" },
     .{ .display = "月見とろろそば", .kana = "つきみとろろそば" },
@@ -172,7 +172,7 @@ const normal: []const Pair = &.{
     .{ .display = "地図が読めない", .kana = "ちずがよめない" },
     .{ .display = "肩たたき券進呈", .kana = "かたたきけんしんてい" },
     .{ .display = "寝る子は育つ", .kana = "ねるこはそだつ" },
-    .{ .display = "いつ見ても綺麗だな", .kana = "いつみてもきれいだな" },
+    .{ .display = "いつ見てもキレイだな", .kana = "いつみてもきれいだな" },
     .{ .display = "諦めたら駄目", .kana = "あきらめたらだめ" },
     .{ .display = "コンピューター", .kana = "こんぴゅーたー" },
     .{ .display = "杏仁豆腐", .kana = "あんにんどうふ" },
@@ -213,7 +213,7 @@ const expert: []const Pair = &.{
     .{ .display = "１００円ショップでアルバイト", .kana = "１００えんしょっぷであるばいと" },
     .{ .display = "登っても登っても高い山", .kana = "のぼってものぼってもたかいやま" },
     .{ .display = "燃えるゴミと燃えないゴミ", .kana = "もえるごみともえないごみ" },
-    .{ .display = "ヴィクトリア朝の遺産", .kana = "ヴぃくとりあちょうのいさん" },
+    .{ .display = "ヴィクトリア朝の遺産", .kana = "ゔぃくとりあちょうのいさん" },
     .{ .display = "百害あって一利なし", .kana = "ひゃくがいあっていちりなし" },
     .{ .display = "塩分過多に気を付ける", .kana = "えんぶんかたにきをつける" },
     .{ .display = "本人評価額は３００万円", .kana = "ほんにんひょうかがくは３００まんえん" },

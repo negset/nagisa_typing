@@ -31,5 +31,5 @@ pub fn update(_: *@This()) !Transition {
 pub fn draw(_: *@This()) void {
     utils.drawText("渚タイピング", .{ .x = 400, .y = 200 }, .center_middle, 48, .black);
     utils.drawText("SPACE ではじめる", .{ .x = 400, .y = 400 }, .center_middle, 36, .dark_gray);
-    utils.drawText("(c) 2026 negset", .{ .x = 400, .y = 540 }, .center_middle, 24, .dark_gray);
+    utils.drawText("© 2026 negset", .{ .x = 400, .y = 540 }, .center_middle, 24, .dark_gray);
 }

@@ -14,17 +14,23 @@ lesson: Lesson = undefined,
 level: Level = undefined,
 correct: u32 = 0,
 miss: u32 = 0,
-typed_keys: ArrayList(u8),
 start: Timestamp = undefined,
+typed_keys: ArrayList(u8),
+se_correct: rl.Sound = undefined,
+se_miss: rl.Sound = undefined,
 
 pub fn init(gpa: Allocator) !@This() {
     return .{
         .typed_keys = try .initCapacity(gpa, 50),
+        .se_correct = try rl.loadSound("resources/se/correct.ogg"),
+        .se_miss = try rl.loadSound("resources/se/miss.ogg"),
     };
 }
 
 pub fn deinit(self: *@This(), gpa: Allocator) void {
     self.typed_keys.deinit(gpa);
+    self.se_correct.unload();
+    self.se_miss.unload();
 }
 
 pub fn enter(
@@ -57,18 +63,18 @@ fn clearTypedKeys(self: *@This()) void {
 }
 
 pub fn update(self: *@This(), io: Io) !Transition {
-    switch (rl.getKeyPressed()) {
-        .null => return .none,
-        .escape => return .{ .to_select = .{} },
-        else => {},
-    }
+    if (rl.getKeyPressed() == .escape)
+        return .{ .to_select = .{} };
 
     const key: u8 = @intCast(rl.getCharPressed());
+    if (key == 0) return .none;
 
     if (self.lesson.getExercise().transition(key)) {
         self.correct += 1;
+        rl.playSound(self.se_correct);
     } else {
         self.miss += 1;
+        rl.playSound(self.se_miss);
         return .none;
     }
 

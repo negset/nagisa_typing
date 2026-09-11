@@ -30,14 +30,7 @@ pub fn update(self: *@This()) !Transition {
         .w, .up => self.cursor = @mod(self.cursor + 2, 3),
         .s, .down => self.cursor = @mod(self.cursor + 1, 3),
         .space => return .{
-            .to_play = .{
-                .level = switch (self.cursor) {
-                    0 => .basic,
-                    1 => .normal,
-                    2 => .expert,
-                    else => unreachable,
-                },
-            },
+            .to_play = .{ .level = @enumFromInt(self.cursor) },
         },
         .escape => return .to_title,
         else => {},
