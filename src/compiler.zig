@@ -332,6 +332,7 @@ const table = [_]Entry{
     .{ .codepoint = 0xff01, .keys = &.{"!"} },
     .{ .codepoint = 0xff06, .keys = &.{"&"} },
     .{ .codepoint = 0xff1f, .keys = &.{"?"} },
+    .{ .codepoint = 0xff5e, .keys = &.{"~"} },
 };
 
 // -----------------------------------------------------------------------------
@@ -876,6 +877,11 @@ fn rejectSingleN(
         0x306d,
         0x306e,
 
+        // や行
+        0x3084,
+        0x3086,
+        0x3088,
+
         // ん
         0x3093,
         => true,
@@ -981,7 +987,7 @@ fn appendStates(
 
 pub fn compile(
     gpa: Allocator,
-    comptime kana: []const u8,
+    kana: []const u8,
 ) ![]State {
     var result = ArrayList(State).empty;
 
@@ -993,9 +999,7 @@ pub fn compile(
         result.deinit(gpa);
     }
 
-    var iterator = Utf8View
-        .initComptime(kana)
-        .iterator();
+    var iterator = (try Utf8View.init(kana)).iterator();
 
     while (iterator.nextCodepoint()) |codepoint| {
         const states = try buildFragment(

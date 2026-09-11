@@ -1,8 +1,9 @@
 const rl = @import("raylib");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const Io = std.Io;
 
-const Transition = @import("main.zig").Transition;
+const Transition = @import("scene.zig").Transition;
 const utils = @import("utils.zig");
 
 pub fn init(_: Allocator) !@This() {
@@ -11,7 +12,12 @@ pub fn init(_: Allocator) !@This() {
 
 pub fn deinit(_: *@This(), _: Allocator) void {}
 
-pub fn enter(_: *@This(), _: Allocator, _: @FieldType(Transition, "to_title")) !void {}
+pub fn enter(
+    _: *@This(),
+    _: Allocator,
+    _: Io,
+    _: Transition.Data(@This()),
+) !void {}
 
 pub fn leave(_: *@This(), _: Allocator) void {}
 

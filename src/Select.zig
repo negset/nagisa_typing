@@ -1,8 +1,9 @@
 const rl = @import("raylib");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const Io = std.Io;
 
-const Transition = @import("main.zig").Transition;
+const Transition = @import("scene.zig").Transition;
 const utils = @import("utils.zig");
 
 cursor: u8 = 0,
@@ -13,7 +14,12 @@ pub fn init(_: Allocator) !@This() {
 
 pub fn deinit(_: *@This(), _: Allocator) void {}
 
-pub fn enter(self: *@This(), _: Allocator, data: @FieldType(Transition, "to_select")) !void {
+pub fn enter(
+    self: *@This(),
+    _: Allocator,
+    _: Io,
+    data: Transition.Data(@This()),
+) !void {
     self.cursor = data.cursor;
 }
 
