@@ -109,7 +109,8 @@ pub fn draw(self: *@This()) void {
     const text = self.typed_keys.items[0 .. self.typed_keys.items.len - 1 :0];
 
     common.drawText(ex.display, .{ .x = 400, .y = 240 }, .center_middle, 44, .black);
-    drawKana(ex.kana, ex.getState().fragment_index, ex.getState().fragment_len);
+    drawActiveKanaRect(ex.kana, ex.getState().fragment_index, ex.getState().fragment_len);
+    common.drawText(ex.kana, .{ .x = 400, .y = 290 }, .center_middle, 32, .dark_gray);
     common.drawText(text, .{ .x = 400, .y = 340 }, .center_middle, 32, .black);
 
     if (self.damage_flash > 0.0) {
@@ -123,17 +124,18 @@ pub fn draw(self: *@This()) void {
     }
 }
 
-fn drawKana(text: [:0]const u8, active_index: usize, active_len: usize) void {
+fn drawActiveKanaRect(text: [:0]const u8, active_index: usize, active_len: usize) void {
     const font = common.font;
     const size = 32;
     const padding = 4;
     const scale_factor = @as(f32, @floatFromInt(size)) / @as(f32, @floatFromInt(font.baseSize));
-    const rect = rl.measureTextEx(font, text, size, 0);
-    var pos = rect.scale(-0.5).add(.{ .x = 400, .y = 290 });
+    const box = rl.measureTextEx(font, text, size, 0);
+    const pos = rl.Vector2.init(400, 290).add(box.scale(-0.5));
 
     var i: usize = 0;
     var kana_index: usize = 0;
     var byte_count: i32 = undefined;
+    var active_rect: rl.Rectangle = .init(pos.x, pos.y - padding, 0, box.y + padding * 2);
     while (i < text.len) : ({
         i += @intCast(byte_count);
         kana_index += 1;
@@ -144,15 +146,12 @@ fn drawKana(text: [:0]const u8, active_index: usize, active_len: usize) void {
         const width = scale_factor *
             if (advance_x == 0) font.recs[index].width else @as(f32, @floatFromInt(advance_x));
 
-        if (kana_index >= active_index and kana_index < active_index + active_len) {
-            rl.drawRectangleRec(
-                .{ .x = pos.x, .y = pos.y - padding, .width = width, .height = size + 2 * padding },
-                .yellow,
-            );
-        }
-
-        rl.drawTextCodepoint(font, codepoint, pos, size, .dark_gray);
-
-        pos = pos.add(.{ .x = width, .y = 0 });
+        if (kana_index < active_index) {
+            active_rect.x += width;
+        } else if (kana_index < active_index + active_len) {
+            active_rect.width += width;
+        } else break;
     }
+
+    rl.drawRectangleRounded(active_rect, 0.5, 8, .yellow);
 }
