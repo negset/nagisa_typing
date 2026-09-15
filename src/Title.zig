@@ -4,7 +4,7 @@ const Allocator = std.mem.Allocator;
 const Io = std.Io;
 
 const Transition = @import("scene.zig").Transition;
-const utils = @import("utils.zig");
+const common = @import("common.zig");
 
 pub fn init(_: Allocator) !@This() {
     return .{};
@@ -23,13 +23,13 @@ pub fn leave(_: *@This(), _: Allocator) void {}
 
 pub fn update(_: *@This()) !Transition {
     if (rl.getKeyPressed() == .space)
-        return .{ .to_select = .{} };
+        return .to_select;
 
     return .none;
 }
 
 pub fn draw(_: *@This()) void {
-    utils.drawText("渚タイピング", .{ .x = 400, .y = 200 }, .center_middle, 48, .black);
-    utils.drawText("SPACE ではじめる", .{ .x = 400, .y = 400 }, .center_middle, 36, .dark_gray);
-    utils.drawText("© 2026 negset", .{ .x = 400, .y = 540 }, .center_middle, 24, .dark_gray);
+    common.drawText("渚タイピング", .{ .x = 400, .y = 200 }, .center_middle, 48, .black);
+    common.drawText("SPACE ではじめる", .{ .x = 400, .y = 400 }, .center_middle, 36, .dark_gray);
+    common.drawText("© 2026 negset", .{ .x = 400, .y = 540 }, .center_middle, 24, .dark_gray);
 }

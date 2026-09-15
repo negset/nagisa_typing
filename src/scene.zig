@@ -44,7 +44,7 @@ pub const Transition = union(enum) {
     pub fn Data(comptime T: type) type {
         return switch (T) {
             Title => void,
-            Select => struct { cursor: u8 = 0 },
+            Select => void,
             Play => struct { level: Level },
             Result => struct { level: Level, correct: u32, miss: u32, time: Duration },
             else => @compileError("Unknown scene type."),

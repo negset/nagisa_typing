@@ -12,6 +12,8 @@ const Transition = struct {
 };
 
 pub const State = struct {
+    fragment_index: usize = undefined,
+    fragment_len: usize = undefined,
     transitions: []Transition,
     accept: bool = false,
 
@@ -898,17 +900,29 @@ fn rejectSingleN(
 // Fragment construction
 // -----------------------------------------------------------------------------
 
+const Fragment = struct {
+    states: []State,
+    len: usize,
+};
+
+fn entryLen(entry: *const Entry) usize {
+    return if (entry.codepoint2 != null) 2 else 1;
+}
+
 fn buildFragment(
     gpa: Allocator,
     iterator: *Utf8Iterator,
     codepoint: u21,
-) ![]State {
+) !Fragment {
     if (codepoint == 0x3063) {
         if (consumeSokuonEntry(iterator)) |next_entry| {
-            return buildSokuonStates(
-                gpa,
-                next_entry,
-            );
+            return .{
+                .states = try buildSokuonStates(
+                    gpa,
+                    next_entry,
+                ),
+                .len = 1 + entryLen(next_entry),
+            };
         }
 
         // A standalone/final っ uses its ordinary explicit
@@ -918,10 +932,13 @@ fn buildFragment(
             null,
         );
 
-        return buildEntryStatesOwned(
-            gpa,
-            entry,
-        );
+        return .{
+            .states = try buildEntryStatesOwned(
+                gpa,
+                entry,
+            ),
+            .len = entryLen(entry),
+        };
     }
 
     const entry = try consumeEntry(
@@ -929,10 +946,13 @@ fn buildFragment(
         codepoint,
     );
 
-    return buildEntryStatesOwned(
-        gpa,
-        entry,
-    );
+    return .{
+        .states = try buildEntryStatesOwned(
+            gpa,
+            entry,
+        ),
+        .len = entryLen(entry),
+    };
 }
 
 // -----------------------------------------------------------------------------
@@ -944,6 +964,8 @@ fn appendStates(
     result: *ArrayList(State),
     states: []const State,
     reject_single_n: bool,
+    fragment_index: usize,
+    fragment_len: usize,
 ) !void {
     const state_offset = result.items.len;
 
@@ -981,6 +1003,8 @@ fn appendStates(
         try result.append(gpa, .{
             .transitions = transitions,
             .accept = state.accept,
+            .fragment_index = fragment_index,
+            .fragment_len = fragment_len,
         });
     }
 }
@@ -1005,19 +1029,21 @@ pub fn compile(
 
     var iterator = (try Utf8View.init(kana)).iterator();
 
+    var fragment_index: usize = 0;
+
     while (iterator.nextCodepoint()) |codepoint| {
-        const states = try buildFragment(
+        const fragment = try buildFragment(
             gpa,
             &iterator,
             codepoint,
         );
 
         defer {
-            for (states) |state| {
+            for (fragment.states) |state| {
                 state.deinit(gpa);
             }
 
-            gpa.free(states);
+            gpa.free(fragment.states);
         }
 
         // Look ahead without consuming the next codepoint.
@@ -1029,9 +1055,13 @@ pub fn compile(
         try appendStates(
             gpa,
             &result,
-            states,
+            fragment.states,
             rejectSingleN(next_codepoint),
+            fragment_index,
+            fragment.len,
         );
+
+        fragment_index += fragment.len;
     }
 
     // Every complete input path terminates here.
@@ -1042,6 +1072,8 @@ pub fn compile(
             0,
         ),
         .accept = true,
+        .fragment_index = fragment_index,
+        .fragment_len = 0,
     });
 
     return try result.toOwnedSlice(gpa);

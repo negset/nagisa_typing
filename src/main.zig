@@ -10,9 +10,9 @@ const Title = @import("title.zig");
 const Select = @import("select.zig");
 const Play = @import("Play.zig");
 const Result = @import("Result.zig");
+const common = @import("common.zig");
 const windows = @import("windows.zig");
 
-pub var font: rl.Font = undefined;
 var title: Title = undefined;
 var select: Select = undefined;
 var play: Play = undefined;
@@ -62,16 +62,14 @@ pub fn main(init: std.process.Init) !void {
     rl.initAudioDevice();
     defer rl.closeAudioDevice();
 
-    font = try rl.loadFont("resources/font/KosugiMaru.fnt");
-    defer font.unload();
-
-    rl.setTextureFilter(font.texture, .bilinear);
-    rl.setTextLineSpacing(20);
     rl.setTargetFPS(60);
     rl.setExitKey(.null);
 
     if (comptime builtin.os.tag == .windows)
         windows.disableIme();
+
+    try common.init();
+    defer common.deinit();
 
     title = try .init(gpa);
     select = try .init(gpa);
