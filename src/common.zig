@@ -1,9 +1,10 @@
+const builtin = @import("builtin");
 const rl = @import("raylib");
 
 pub var font: rl.Font = undefined;
 pub var se_confirm: rl.Sound = undefined;
 pub var se_back: rl.Sound = undefined;
-pub var request_exit = false;
+pub var should_close = false;
 
 pub fn init() !void {
     font = try rl.loadFont("resources/font/KosugiMaru.fnt");
@@ -43,4 +44,9 @@ pub fn drawText(
         .right_top => .{ .x = -1.0, .y = 0 },
     });
     rl.drawTextEx(font, text, pos.add(offset), size, 0, color);
+}
+
+pub fn requestExit() void {
+    if (comptime builtin.os.tag != .emscripten)
+        should_close = true;
 }

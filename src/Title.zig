@@ -28,7 +28,7 @@ pub fn update(_: *@This()) !Transition {
             return .to_select;
         },
         .escape => {
-            common.request_exit = true;
+            common.requestExit();
         },
         else => {},
     }
