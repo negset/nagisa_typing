@@ -22,9 +22,15 @@ pub fn enter(
 pub fn leave(_: *@This(), _: Allocator) void {}
 
 pub fn update(_: *@This()) !Transition {
-    if (rl.getKeyPressed() == .space) {
-        rl.playSound(common.se_confirm);
-        return .to_select;
+    switch (rl.getKeyPressed()) {
+        .space => {
+            rl.playSound(common.se_confirm);
+            return .to_select;
+        },
+        .escape => {
+            common.request_exit = true;
+        },
+        else => {},
     }
 
     return .none;

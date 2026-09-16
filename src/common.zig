@@ -3,6 +3,7 @@ const rl = @import("raylib");
 pub var font: rl.Font = undefined;
 pub var se_confirm: rl.Sound = undefined;
 pub var se_back: rl.Sound = undefined;
+pub var request_exit = false;
 
 pub fn init() !void {
     font = try rl.loadFont("resources/font/KosugiMaru.fnt");

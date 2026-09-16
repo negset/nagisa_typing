@@ -83,7 +83,7 @@ pub fn main(init: std.process.Init) !void {
     defer current_scene.leave(gpa);
 
     // Main game loop
-    while (!rl.windowShouldClose()) {
+    while (!rl.windowShouldClose() and !common.request_exit) {
         try update(gpa, io);
 
         rl.beginDrawing();
