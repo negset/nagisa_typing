@@ -12,8 +12,7 @@ const Transition = struct {
 };
 
 pub const State = struct {
-    fragment_index: usize = undefined,
-    fragment_len: usize = undefined,
+    fragment_len: usize = undefined, // A positive value means the start of a fragment.
     transitions: []Transition,
     accept: bool = false,
 
@@ -963,13 +962,12 @@ fn appendStates(
     gpa: Allocator,
     result: *ArrayList(State),
     states: []const State,
-    reject_single_n: bool,
-    fragment_index: usize,
     fragment_len: usize,
+    reject_single_n: bool,
 ) !void {
     const state_offset = result.items.len;
 
-    for (states) |state| {
+    for (states, 0..) |state, i| {
         var transition_count: usize = 0;
 
         for (state.transitions) |transition| {
@@ -985,26 +983,21 @@ fn appendStates(
             transition_count,
         );
 
-        var index: usize = 0;
-
-        for (state.transitions) |transition| {
+        for (state.transitions, 0..) |transition, j| {
             if (reject_single_n and transition.key == 0) {
                 continue;
             }
 
-            transitions[index] = .{
+            transitions[j] = .{
                 .key = transition.key,
                 .next = transition.next + state_offset,
             };
-
-            index += 1;
         }
 
         try result.append(gpa, .{
+            .fragment_len = if (i == 0) fragment_len else 0,
             .transitions = transitions,
             .accept = state.accept,
-            .fragment_index = fragment_index,
-            .fragment_len = fragment_len,
         });
     }
 }
@@ -1028,8 +1021,6 @@ pub fn compile(
     }
 
     var iterator = (try Utf8View.init(kana)).iterator();
-
-    var fragment_index: usize = 0;
 
     while (iterator.nextCodepoint()) |codepoint| {
         const fragment = try buildFragment(
@@ -1056,12 +1047,9 @@ pub fn compile(
             gpa,
             &result,
             fragment.states,
-            rejectSingleN(next_codepoint),
-            fragment_index,
             fragment.len,
+            rejectSingleN(next_codepoint),
         );
-
-        fragment_index += fragment.len;
     }
 
     // Every complete input path terminates here.
@@ -1072,7 +1060,6 @@ pub fn compile(
             0,
         ),
         .accept = true,
-        .fragment_index = fragment_index,
         .fragment_len = 0,
     });
 

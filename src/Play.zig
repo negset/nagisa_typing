@@ -4,6 +4,7 @@ const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const Io = std.Io;
 const Timestamp = Io.Timestamp;
+const Utf8Iterator = std.unicode.Utf8Iterator;
 
 const Lesson = @import("Lesson.zig");
 const Level = Lesson.Level;
@@ -17,6 +18,8 @@ miss: u32 = 0,
 damage_flash: f32 = 0,
 typed_keys: ArrayList(u8),
 start: Timestamp = undefined,
+kana_iter: Utf8Iterator = undefined,
+highlight: rl.Rectangle = undefined,
 se_correct: rl.Sound = undefined,
 se_miss: rl.Sound = undefined,
 
@@ -45,6 +48,7 @@ pub fn enter(
     self.correct = 0;
     self.miss = 0;
     self.clearTypedKeys();
+    try self.resetHighlight();
     self.start = .now(io, .awake);
 }
 
@@ -63,7 +67,43 @@ fn clearTypedKeys(self: *@This()) void {
     self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
 }
 
+fn resetHighlight(self: *@This()) !void {
+    const kana = self.lesson.getExercise().kana;
+    self.kana_iter = (try std.unicode.Utf8View.init(kana)).iterator();
+
+    const font = common.font;
+    const size = 32;
+    const padding = 4;
+    const dimensions = rl.measureTextEx(font, kana, size, 0);
+    const pos = rl.Vector2.init(400, 290).add(dimensions.scale(-0.5));
+
+    self.highlight = .init(pos.x, pos.y - padding, 0, dimensions.y + padding * 2);
+
+    self.updateHighlight();
+}
+
+fn updateHighlight(self: *@This()) void {
+    self.highlight.x += self.highlight.width;
+    self.highlight.width = 0;
+
+    const font = common.font;
+    const size = 32;
+    const scale_factor = @as(f32, @floatFromInt(size)) / @as(f32, @floatFromInt(font.baseSize));
+
+    for (0..self.lesson.getExercise().getState().fragment_len) |_| {
+        const codepoint = self.kana_iter.nextCodepoint().?;
+        const index: usize = @intCast(rl.getGlyphIndex(font, @intCast(codepoint)));
+        const advance_x = font.glyphs[index].advanceX;
+        const width = scale_factor *
+            if (advance_x == 0) font.recs[index].width else @as(f32, @floatFromInt(advance_x));
+
+        self.highlight.width += width;
+    }
+}
+
 pub fn update(self: *@This(), io: Io) !Transition {
+    const ex = self.lesson.getExercise();
+
     self.damage_flash = @max(0.0, self.damage_flash - rl.getFrameTime() * 1.0);
 
     if (rl.getKeyPressed() == .escape) {
@@ -71,34 +111,38 @@ pub fn update(self: *@This(), io: Io) !Transition {
     }
 
     const key: u8 = @intCast(rl.getCharPressed());
-    if (key == 0) return .none;
+    if (key == 0) return .none; // No key is pressed.
 
-    if (self.lesson.getExercise().transition(key)) {
+    if (ex.transition(key)) {
         self.correct += 1;
         rl.playSound(self.se_correct);
+
+        self.appendTypedKeys(key);
+
+        if (ex.getState().fragment_len > 0) {
+            self.updateHighlight();
+        }
+
+        if (ex.getState().accept) {
+            if (self.lesson.goNextExercise()) {
+                self.clearTypedKeys();
+                try self.resetHighlight();
+            } else {
+                // Go to result scene.
+                return .{
+                    .to_result = .{
+                        .level = self.level,
+                        .correct = self.correct,
+                        .miss = self.miss,
+                        .time = Timestamp.untilNow(self.start, io, .awake),
+                    },
+                };
+            }
+        }
     } else {
         self.miss += 1;
         rl.playSound(self.se_miss);
         self.damage_flash = 0.3;
-        return .none;
-    }
-
-    self.appendTypedKeys(key);
-
-    if (self.lesson.getExercise().getState().accept) {
-        if (!self.lesson.goNextExercise()) {
-            // Go to result scene.
-            return .{
-                .to_result = .{
-                    .level = self.level,
-                    .correct = self.correct,
-                    .miss = self.miss,
-                    .time = Timestamp.untilNow(self.start, io, .awake),
-                },
-            };
-        }
-
-        self.clearTypedKeys();
     }
 
     return .none;
@@ -108,8 +152,9 @@ pub fn draw(self: *@This()) void {
     const ex = self.lesson.getExercise();
     const text = self.typed_keys.items[0 .. self.typed_keys.items.len - 1 :0];
 
+    rl.drawRectangleRounded(self.highlight, 0.5, 8, .yellow);
+
     common.drawText(ex.display, .{ .x = 400, .y = 240 }, .center_middle, 44, .black);
-    drawActiveKanaRect(ex.kana, ex.getState().fragment_index, ex.getState().fragment_len);
     common.drawText(ex.kana, .{ .x = 400, .y = 290 }, .center_middle, 32, .dark_gray);
     common.drawText(text, .{ .x = 400, .y = 340 }, .center_middle, 32, .black);
 
@@ -122,36 +167,4 @@ pub fn draw(self: *@This()) void {
             rl.fade(.red, self.damage_flash),
         );
     }
-}
-
-fn drawActiveKanaRect(text: [:0]const u8, active_index: usize, active_len: usize) void {
-    const font = common.font;
-    const size = 32;
-    const padding = 4;
-    const scale_factor = @as(f32, @floatFromInt(size)) / @as(f32, @floatFromInt(font.baseSize));
-    const box = rl.measureTextEx(font, text, size, 0);
-    const pos = rl.Vector2.init(400, 290).add(box.scale(-0.5));
-
-    var i: usize = 0;
-    var kana_index: usize = 0;
-    var byte_count: i32 = undefined;
-    var active_rect: rl.Rectangle = .init(pos.x, pos.y - padding, 0, box.y + padding * 2);
-    while (i < text.len) : ({
-        i += @intCast(byte_count);
-        kana_index += 1;
-    }) {
-        const codepoint = rl.getCodepointNext(text[i.. :0], &byte_count);
-        const index: usize = @intCast(rl.getGlyphIndex(font, codepoint));
-        const advance_x = font.glyphs[index].advanceX;
-        const width = scale_factor *
-            if (advance_x == 0) font.recs[index].width else @as(f32, @floatFromInt(advance_x));
-
-        if (kana_index < active_index) {
-            active_rect.x += width;
-        } else if (kana_index < active_index + active_len) {
-            active_rect.width += width;
-        } else break;
-    }
-
-    rl.drawRectangleRounded(active_rect, 0.5, 8, .yellow);
 }
