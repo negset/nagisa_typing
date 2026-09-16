@@ -1,15 +1,21 @@
 const rl = @import("raylib");
 
 pub var font: rl.Font = undefined;
+pub var se_confirm: rl.Sound = undefined;
+pub var se_back: rl.Sound = undefined;
 
 pub fn init() !void {
     font = try rl.loadFont("resources/font/KosugiMaru.fnt");
     rl.setTextureFilter(font.texture, .bilinear);
     rl.setTextLineSpacing(20);
+    se_confirm = try rl.loadSound("resources/se/confirm.ogg");
+    se_back = try rl.loadSound("resources/se/back.ogg");
 }
 
 pub fn deinit() void {
-    defer font.unload();
+    font.unload();
+    se_confirm.unload();
+    se_back.unload();
 }
 
 pub const TextAlign = enum {

@@ -49,6 +49,7 @@ pub fn leave(self: *@This(), gpa: Allocator) void {
 
 pub fn update(_: *@This()) !Transition {
     if (rl.getKeyPressed() == .space) {
+        rl.playSound(common.se_confirm);
         return .to_select;
     }
 

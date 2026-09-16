@@ -152,7 +152,10 @@ fn updateHighlight(self: *@This(), len: usize) void {
 pub fn update(self: *@This(), io: Io) !Transition {
     self.damage_flash = @max(0.0, self.damage_flash - rl.getFrameTime() * 1.0);
 
-    if (rl.getKeyPressed() == .escape) return .to_select;
+    if (rl.getKeyPressed() == .escape) {
+        rl.playSound(common.se_back);
+        return .to_select;
+    }
 
     const key: u8 = @intCast(rl.getCharPressed());
     if (key == 0) return .none; // No key is pressed.
