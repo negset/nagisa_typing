@@ -47,13 +47,60 @@ pub fn enter(
     self.level = data.level;
     self.correct = 0;
     self.miss = 0;
+    self.damage_flash = 0;
     self.clearTypedKeys();
-    try self.resetHighlight();
+    self.resetHighlight();
     self.start = .now(io, .awake);
 }
 
 pub fn leave(self: *@This(), gpa: Allocator) void {
     self.lesson.deinit(gpa);
+}
+
+fn onCorrectInput(self: *@This(), key: u8) void {
+    self.correct += 1;
+    rl.playSound(self.se_correct);
+    self.appendTypedKeys(key);
+}
+
+fn onIncorrectInput(self: *@This()) void {
+    self.miss += 1;
+    rl.playSound(self.se_miss);
+    self.damage_flash = 0.3;
+}
+
+fn updateExercise(self: *@This(), key: u8) bool {
+    const ex = self.lesson.getExercise();
+
+    if (ex.getState().transition(key)) |next| {
+        ex.current_state = next;
+        self.onCorrectInput(key);
+        const len = ex.getState().fragment_len;
+        if (len > 0) self.updateHighlight(len);
+        return true;
+    }
+
+    // Epsilon transition.
+    if (ex.getState().transition(0)) |epsilon| {
+        if (ex.states[epsilon].transition(key)) |next| {
+            ex.current_state = next;
+            self.updateHighlight(ex.states[epsilon].fragment_len);
+            self.onCorrectInput(key);
+            return true;
+        }
+    }
+
+    self.onIncorrectInput();
+    return false;
+}
+
+fn goNextExercise(self: *@This()) bool {
+    if (self.lesson.current_exercise < self.lesson.exercises.len - 1) {
+        self.lesson.current_exercise += 1;
+        self.lesson.getExercise().current_state = 0;
+        return true;
+    }
+    return false;
 }
 
 fn appendTypedKeys(self: *@This(), key: u8) void {
@@ -67,22 +114,23 @@ fn clearTypedKeys(self: *@This()) void {
     self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
 }
 
-fn resetHighlight(self: *@This()) !void {
-    const kana = self.lesson.getExercise().kana;
-    self.kana_iter = (try std.unicode.Utf8View.init(kana)).iterator();
+fn resetHighlight(self: *@This()) void {
+    const ex = self.lesson.getExercise();
+    const view = std.unicode.Utf8View.init(ex.kana) catch @panic("Utf8View error.");
+    self.kana_iter = view.iterator();
 
     const font = common.font;
     const size = 32;
     const padding = 4;
-    const dimensions = rl.measureTextEx(font, kana, size, 0);
+    const dimensions = rl.measureTextEx(font, ex.kana, size, 0);
     const pos = rl.Vector2.init(400, 290).add(dimensions.scale(-0.5));
 
     self.highlight = .init(pos.x, pos.y - padding, 0, dimensions.y + padding * 2);
 
-    self.updateHighlight();
+    self.updateHighlight(ex.states[0].fragment_len);
 }
 
-fn updateHighlight(self: *@This()) void {
+fn updateHighlight(self: *@This(), len: usize) void {
     self.highlight.x += self.highlight.width;
     self.highlight.width = 0;
 
@@ -90,7 +138,7 @@ fn updateHighlight(self: *@This()) void {
     const size = 32;
     const scale_factor = @as(f32, @floatFromInt(size)) / @as(f32, @floatFromInt(font.baseSize));
 
-    for (0..self.lesson.getExercise().getState().fragment_len) |_| {
+    for (0..len) |_| {
         const codepoint = self.kana_iter.nextCodepoint().?;
         const index: usize = @intCast(rl.getGlyphIndex(font, @intCast(codepoint)));
         const advance_x = font.glyphs[index].advanceX;
@@ -102,31 +150,18 @@ fn updateHighlight(self: *@This()) void {
 }
 
 pub fn update(self: *@This(), io: Io) !Transition {
-    const ex = self.lesson.getExercise();
-
     self.damage_flash = @max(0.0, self.damage_flash - rl.getFrameTime() * 1.0);
 
-    if (rl.getKeyPressed() == .escape) {
-        return .to_select;
-    }
+    if (rl.getKeyPressed() == .escape) return .to_select;
 
     const key: u8 = @intCast(rl.getCharPressed());
     if (key == 0) return .none; // No key is pressed.
 
-    if (ex.transition(key)) {
-        self.correct += 1;
-        rl.playSound(self.se_correct);
-
-        self.appendTypedKeys(key);
-
-        if (ex.getState().fragment_len > 0) {
-            self.updateHighlight();
-        }
-
-        if (ex.getState().accept) {
-            if (self.lesson.goNextExercise()) {
+    if (self.updateExercise(key)) {
+        if (self.lesson.getExercise().getState().accept) {
+            if (self.goNextExercise()) {
                 self.clearTypedKeys();
-                try self.resetHighlight();
+                self.resetHighlight();
             } else {
                 // Go to result scene.
                 return .{
@@ -139,10 +174,6 @@ pub fn update(self: *@This(), io: Io) !Transition {
                 };
             }
         }
-    } else {
-        self.miss += 1;
-        rl.playSound(self.se_miss);
-        self.damage_flash = 0.3;
     }
 
     return .none;

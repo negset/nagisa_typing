@@ -37,27 +37,6 @@ pub const Exercise = struct {
     pub fn getState(self: @This()) State {
         return self.states[self.current_state];
     }
-
-    pub fn transition(self: *@This(), key: u8) bool {
-        var current = self.getState();
-
-        if (current.transition(key)) |next| {
-            self.current_state = next;
-            return true;
-        }
-
-        // Epsilon transition.
-        if (current.transition(0)) |epsilon| {
-            current = self.states[epsilon];
-
-            if (current.transition(key)) |next| {
-                self.current_state = next;
-                return true;
-            }
-        }
-
-        return false;
-    }
 };
 
 pub const Level = enum(u8) { basic, normal, expert };
@@ -303,13 +282,4 @@ pub fn deinit(self: @This(), gpa: Allocator) void {
 
 pub fn getExercise(self: @This()) *Exercise {
     return &self.exercises[self.current_exercise];
-}
-
-pub fn goNextExercise(self: *@This()) bool {
-    self.getExercise().current_state = 0;
-    if (self.current_exercise < self.exercises.len - 1) {
-        self.current_exercise += 1;
-        return true;
-    }
-    return false;
 }
