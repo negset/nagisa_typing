@@ -1,5 +1,7 @@
 # 渚タイピング
 
+https://negset.com/nagisa_typing/
+
 ## Third-Party License
 
 このプロジェクトには、以下の第三者提供素材が含まれています。
