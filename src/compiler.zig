@@ -335,6 +335,7 @@ const table = [_]Entry{
     .{ .codepoint = 0x300d, .keys = &.{"]"} },
     .{ .codepoint = 0x30fc, .keys = &.{"-"} },
     .{ .codepoint = 0xff01, .keys = &.{"!"} },
+    .{ .codepoint = 0xff05, .keys = &.{"%"} },
     .{ .codepoint = 0xff06, .keys = &.{"&"} },
     .{ .codepoint = 0xff1f, .keys = &.{"?"} },
     .{ .codepoint = 0xff5e, .keys = &.{"~"} },

@@ -41,6 +41,57 @@ pub const Exercise = struct {
 
 pub const Level = enum(u8) { basic, normal, expert };
 
+const Pair = struct {
+    display: [:0]const u8,
+    kana: [:0]const u8,
+};
+
+fn init(gpa: Allocator, io: Io, pairs: []const Pair) !@This() {
+    const rand_source: Random.IoSource = .{ .io = io };
+    const rand = rand_source.interface();
+
+    var indices = try gpa.alloc(usize, pairs.len);
+    defer gpa.free(indices);
+
+    for (indices, 0..) |_, i| {
+        indices[i] = i;
+    }
+
+    rand.shuffle(usize, indices);
+
+    const ex_quota = @min(pairs.len, 20);
+    const exercises = try gpa.alloc(Exercise, ex_quota);
+    errdefer gpa.free(exercises);
+
+    for (indices[0..ex_quota], 0..) |index, i| {
+        const pair = pairs[index];
+        exercises[i] = try .init(gpa, pair.display, pair.kana);
+    }
+
+    return .{
+        .exercises = exercises,
+    };
+}
+
+pub fn initByLevel(gpa: Allocator, io: Io, level: Level) !@This() {
+    return switch (level) {
+        .basic => init(gpa, io, basic),
+        .normal => init(gpa, io, normal),
+        .expert => init(gpa, io, expert),
+    };
+}
+
+pub fn deinit(self: @This(), gpa: Allocator) void {
+    for (self.exercises) |exercise| {
+        exercise.deinit(gpa);
+    }
+    gpa.free(self.exercises);
+}
+
+pub fn getExercise(self: @This()) *Exercise {
+    return &self.exercises[self.current_exercise];
+}
+
 // 2 ~ 6
 const basic: []const Pair = &.{
     .{ .display = "蟹", .kana = "かに" },
@@ -49,7 +100,6 @@ const basic: []const Pair = &.{
     .{ .display = "狸", .kana = "たぬき" },
     .{ .display = "吟味", .kana = "ぎんみ" },
     .{ .display = "酸素", .kana = "さんそ" },
-    .{ .display = "土星", .kana = "どせい" },
     .{ .display = "海洋", .kana = "かいよう" },
     .{ .display = "了解", .kana = "りょうかい" },
     .{ .display = "シアター", .kana = "しあたー" },
@@ -103,9 +153,50 @@ const basic: []const Pair = &.{
     .{ .display = "モーリタニア", .kana = "もーりたにあ" },
     .{ .display = "ツンドラ", .kana = "つんどら" },
     .{ .display = "山", .kana = "やま" },
+    .{ .display = "お宝", .kana = "おたから" },
+    .{ .display = "鯖", .kana = "さば" },
+    .{ .display = "短冊", .kana = "たんざく" },
+    .{ .display = "観音様", .kana = "かんのんさま" },
+    .{ .display = "大丈夫", .kana = "だいじょうぶ" },
+    .{ .display = "見つかった", .kana = "みつかった" },
+    .{ .display = "シャワー", .kana = "しゃわー" },
+    .{ .display = "死屍累々", .kana = "ししるいるい" },
+    .{ .display = "名声", .kana = "めいせい" },
+    .{ .display = "天秤座", .kana = "てんびんざ" },
+    .{ .display = "朝食", .kana = "ちょうしょく" },
+    .{ .display = "引き戸", .kana = "ひきど" },
+    .{ .display = "牛乳", .kana = "ぎゅうにゅう" },
+    .{ .display = "金継ぎ", .kana = "きんつぎ" },
+    .{ .display = "報告", .kana = "ほうこく" },
+    .{ .display = "クォーツ", .kana = "くぉーつ" },
+    .{ .display = "ポシェット", .kana = "ぽしぇっと" },
+    .{ .display = "過去", .kana = "かこ" },
+    .{ .display = "黄泉", .kana = "よみ" },
+    .{ .display = "尼", .kana = "あま" },
+    .{ .display = "衛星", .kana = "えいせい" },
+    .{ .display = "ロコモコ", .kana = "ろこもこ" },
+    .{ .display = "ゴシック", .kana = "ごしっく" },
+    .{ .display = "魂", .kana = "たましい" },
+    .{ .display = "エンドウ豆", .kana = "えんどうまめ" },
+    .{ .display = "金髪", .kana = "きんぱつ" },
+    .{ .display = "卵焼き", .kana = "たまごやき" },
+    .{ .display = "修行僧", .kana = "しゅぎょうそう" },
+    .{ .display = "黒板消し", .kana = "こくばんけし" },
+    .{ .display = "節電", .kana = "せつでん" },
+    .{ .display = "夜空", .kana = "よぞら" },
+    .{ .display = "お財布", .kana = "おさいふ" },
+    .{ .display = "缶コーヒー", .kana = "かんこーひー" },
+    .{ .display = "タッチペン", .kana = "たっちぺん" },
+    .{ .display = "フォロー", .kana = "ふぉろー" },
+    .{ .display = "お勘定", .kana = "おかんじょう" },
+    .{ .display = "定期券", .kana = "ていきけん" },
+    .{ .display = "機種変更", .kana = "きしゅへんこう" },
+    .{ .display = "方位磁石", .kana = "ほういじしゃく" },
+    .{ .display = "海の家", .kana = "うみのいえ" },
+    .{ .display = "熱気球", .kana = "ねつききゅう" },
 };
 
-// 7 ~ 10
+// 7 ~ 11
 const normal: []const Pair = &.{
     .{ .display = "サイドステップ", .kana = "さいどすてっぷ" },
     .{ .display = "体験期間", .kana = "たいけんきかん" },
@@ -167,24 +258,61 @@ const normal: []const Pair = &.{
     .{ .display = "血に飢えた獣たち", .kana = "ちにうえたけものたち" },
     .{ .display = "来世は虫が良い", .kana = "らいせはむしがいい" },
     .{ .display = "明日天気にな～れ", .kana = "あしたてんきにな～れ" },
+    .{ .display = "ニンニク入れますか？", .kana = "にんにくいれますか？" },
+    .{ .display = "快方に向かう", .kana = "かいほうにむかう" },
+    .{ .display = "夕張メロン", .kana = "ゆうばりめろん" },
+    .{ .display = "野放しにするな", .kana = "のばなしにするな" },
+    .{ .display = "食器用洗剤", .kana = "しょっきようせんざい" },
+    .{ .display = "ブルータス、お前もか", .kana = "ぶるーたす、おまえもか" },
+    .{ .display = "ずっと好きだったのに。", .kana = "ずっとすきだったのに。" },
+    .{ .display = "立つ鳥跡を濁さず", .kana = "たつとりあとをにごさず" },
+    .{ .display = "公務執行妨害", .kana = "こうむしっこうぼうがい" },
+    .{ .display = "フリーダイヤル０１２０", .kana = "ふりーだいやる０１２０" },
+    .{ .display = "因幡の白兎", .kana = "いなばのしろうさぎ" },
+    .{ .display = "大盛り無料", .kana = "おおもりむりょう" },
+    .{ .display = "ノールックパス", .kana = "のーるっくぱす" },
+    .{ .display = "みどりの窓口", .kana = "みどりのまどぐち" },
+    .{ .display = "みんな友達", .kana = "みんなともだち" },
+    .{ .display = "這う這うの体", .kana = "ほうほうのてい" },
+    .{ .display = "装備していくかい？", .kana = "そうびしていくかい？" },
+    .{ .display = "パスワードを忘れた", .kana = "ぱすわーどをわすれた" },
+    .{ .display = "レジ袋有料化", .kana = "れじぶくろゆうりょうか" },
+    .{ .display = "高輪ゲートウェイ", .kana = "たかなわげーとうぇい" },
+    .{ .display = "二度漬け禁止", .kana = "にどづけきんし" },
+    .{ .display = "鬼は外、福は内", .kana = "おにはそと、ふくはうち" },
+    .{ .display = "行き場のない怒り", .kana = "いきばのないいかり" },
+    .{ .display = "良い子はマネしないでね", .kana = "よいこはまねしないでね" },
+    .{ .display = "溜飲を下げる", .kana = "りゅういんをさげる" },
+    .{ .display = "緑黄色野菜", .kana = "りょくおうしょくやさい" },
+    .{ .display = "有機剥き栗", .kana = "ゆうきむきぐり" },
+    .{ .display = "アフタヌーンティー", .kana = "あふたぬーんてぃー" },
+    .{ .display = "ひよこ鑑定士", .kana = "ひよこかんていし" },
+    .{ .display = "竜の逆鱗", .kana = "りゅうのげきりん" },
+    .{ .display = "ポルターガイスト", .kana = "ぽるたーがいすと" },
+    .{ .display = "斬り捨て御免", .kana = "きりすてごめん" },
+    .{ .display = "学校の七不思議", .kana = "がっこうのななふしぎ" },
+    .{ .display = "高度経済成長", .kana = "こうどけいざいせいちょう" },
+    .{ .display = "東洋の魔女", .kana = "とうようのまじょ" },
+    .{ .display = "大は小を兼ねる", .kana = "だいはしょうをかねる" },
+    .{ .display = "良くも悪くも", .kana = "よくもわるくも" },
+    .{ .display = "料理のさしすせそ", .kana = "りょうりのさしすせそ" },
+    .{ .display = "長所と短所", .kana = "ちょうしょとたんしょ" },
+    .{ .display = "そんな馬鹿な！？", .kana = "そんなばかな！？" },
 };
 
-// 11 ~
+// 12 ~
 const expert: []const Pair = &.{
     .{ .display = "エレベーターが故障中", .kana = "えれべーたーがこしょうちゅう" },
     .{ .display = "隣の客はよく柿食う客だ", .kana = "となりのきゃくはよくかきくうきゃくだ" },
     .{ .display = "東海道新幹線", .kana = "とうかいどうしんかんせん" },
     .{ .display = "二兎追うものは一兎をも得ず", .kana = "にとおうものはいっとをもえず" },
-    .{ .display = "ブルータス、お前もか", .kana = "ぶるーたす、おまえもか" },
     .{ .display = "本日は営業しております", .kana = "ほんじつはえいぎょうしております" },
-    .{ .display = "ずっと好きだったのに。", .kana = "ずっとすきだったのに。" },
     .{ .display = "赤パジャマ青パジャマ黄パジャマ", .kana = "あかぱじゃまあおぱじゃまきぱじゃま" },
     .{ .display = "改札を出て左に直進", .kana = "かいさつをでてひだりにちょくしん" },
     .{ .display = "中央卸売市場", .kana = "ちゅうおうおろしうりしじょう" },
     .{ .display = "おすすめの整骨院を教えて", .kana = "おすすめのせいこついんをおしえて" },
     .{ .display = "わかりづらいよ、倒置法は。", .kana = "わかりづらいよ、とうちほうは。" },
     .{ .display = "六方最密充填", .kana = "ろっぽうさいみつじゅうてん" },
-    .{ .display = "花火大会は今週の日曜だ", .kana = "はなびたいかいはこんしゅうのにちようだ" },
     .{ .display = "庭でツチノコを見つけたよ", .kana = "にわでつちのこをみつけたよ" },
     .{ .display = "チーズバーガーとポテトとナゲット", .kana = "ちーずばーがーとぽてととなげっと" },
     .{ .display = "今お電話大丈夫ですか？", .kana = "いまおでんわだいじょうぶですか？" },
@@ -196,16 +324,13 @@ const expert: []const Pair = &.{
     .{ .display = "百害あって一利なし", .kana = "ひゃくがいあっていちりなし" },
     .{ .display = "塩分過多に気を付ける", .kana = "えんぶんかたにきをつける" },
     .{ .display = "本人評価額は３００万円", .kana = "ほんにんひょうかがくは３００まんえん" },
-    .{ .display = "立つ鳥跡を濁さず", .kana = "たつとりあとをにごさず" },
     .{ .display = "最終審査に合格する", .kana = "さいしゅうしんさにごうかくする" },
     .{ .display = "よろしくお願い申し上げます。", .kana = "よろしくおねがいもうしあげます。" },
     .{ .display = "もしもし？聞こえてる？", .kana = "もしもし？きこえてる？" },
     .{ .display = "新人社員研修", .kana = "しんじんしゃいんけんしゅう" },
     .{ .display = "お気持ちだけで結構です", .kana = "おきもちだけでけっこうです" },
-    .{ .display = "フリーダイヤル０１２０", .kana = "ふりーだいやる０１２０" },
     .{ .display = "昭和世代と令和世代", .kana = "しょうわせだいとれいわせだい" },
     .{ .display = "意気投合して連絡先を交換", .kana = "いきとうごうしてれんらくさきをこうかん" },
-    .{ .display = "公務執行妨害", .kana = "こうむしっこうぼうがい" },
     .{ .display = "フォークリフトを乗り回す", .kana = "ふぉーくりふとをのりまわす" },
     .{ .display = "最寄り駅の一つ手前で降りる", .kana = "もよりえきのひとつてまえでおりる" },
     .{ .display = "地球温暖化対策", .kana = "ちきゅうおんだんかたいさく" },
@@ -222,7 +347,6 @@ const expert: []const Pair = &.{
     .{ .display = "次に会うときはお互い敵だ", .kana = "つぎにあうときはおたがいてきだ" },
     .{ .display = "夜食にカップ焼きそば", .kana = "やしょくにかっぷやきそば" },
     .{ .display = "通勤時間を有効活用", .kana = "つうきんじかんをゆうこうかつよう" },
-    .{ .display = "因幡の白兎", .kana = "いなばのしろうさぎ" },
     .{ .display = "桃から生まれた桃太郎", .kana = "ももからうまれたももたろう" },
     .{ .display = "己の無知を自覚する", .kana = "おのれのむちをじかくする" },
     .{ .display = "お子様ランチの旗を集める", .kana = "おこさまらんちのはたをあつめる" },
@@ -231,55 +355,51 @@ const expert: []const Pair = &.{
     .{ .display = "老若男女が楽しめる映画", .kana = "ろうにゃくなんにょがたのしめるえいが" },
     .{ .display = "この先通行止めです", .kana = "このさきつうこうどめです" },
     .{ .display = "コンビニスイーツを買って帰る", .kana = "こんびにすいーつをかってかえる" },
+    .{ .display = "朱に交われば赤くなる", .kana = "しゅにまじわればあかくなる" },
+    .{ .display = "アラブ首長国連邦", .kana = "あらぶしゅちょうこくれんぽう" },
+    .{ .display = "平気な顔で嘘をつく", .kana = "へいきなかおでうそをつく" },
+    .{ .display = "幻の二千円札", .kana = "まぼろしのにせんえんさつ" },
+    .{ .display = "土曜の午後はカフェで読書", .kana = "どようのごごはかふぇでどくしょ" },
+    .{ .display = "東京大阪間は約４００キロ", .kana = "とうきょうおおさかかんはやく４００きろ" },
+    .{ .display = "長寿の秘訣は何ですか？", .kana = "ちょうじゅのひけつはなんですか？" },
+    .{ .display = "好きの反対は無関心", .kana = "すきのはんたいはむかんしん" },
+    .{ .display = "アカマンボウはマグロの代替品", .kana = "あかまんぼうはまぐろのだいたいひん" },
+    .{ .display = "昨日全然寝てないわ～", .kana = "きのうぜんぜんねてないわ～" },
+    .{ .display = "人気投票第一位", .kana = "にんきとうひょうだいいちい" },
+    .{ .display = "筋トレの後のプロテイン", .kana = "きんとれのあとのぷろていん" },
+    .{ .display = "電子書籍より紙の本", .kana = "でんししょせきよりかみのほん" },
+    .{ .display = "理路整然と論破する", .kana = "りろせいぜんとろんぱする" },
+    .{ .display = "このカードを覚えてください", .kana = "このかーどをおぼえてください" },
+    .{ .display = "暴君として名を轟かす", .kana = "ぼうくんとしてなをとどろかす" },
+    .{ .display = "これ注文通ってますか？", .kana = "これちゅうもんとおってますか？" },
+    .{ .display = "水分補給を忘れずに！", .kana = "すいぶんほきゅうをわすれずに！" },
+    .{ .display = "究極の料理人を目指す", .kana = "きゅうきょくのりょうりにんをめざす" },
+    .{ .display = "今夜は月がきれいですね", .kana = "こんやはつきがきれいですね" },
+    .{ .display = "人工知能に全てを委ねる", .kana = "じんこうちのうにすべてをゆだねる" },
+    .{ .display = "自己利益より他者貢献", .kana = "じこりえきよりたしゃこうけん" },
+    .{ .display = "低気圧で頭痛が酷い", .kana = "ていきあつでずつうがひどい" },
+    .{ .display = "開戦の狼煙が上がる", .kana = "かいせんののろしがあがる" },
+    .{ .display = "年々夏が熱くなる", .kana = "ねんねんなつがあつくなる" },
+    .{ .display = "世界に広がる日本食の魅力", .kana = "せかいにひろがるにほんしょくのみりょく" },
+    .{ .display = "執筆活動に専念する", .kana = "しっぴつかつどうにせんねんする" },
+    .{ .display = "昼夜逆転の生活", .kana = "ちゅうやぎゃくてんのせいかつ" },
+    .{ .display = "タンスの角に小指をぶつける", .kana = "たんすのかどにこゆびをぶつける" },
+    .{ .display = "解散の理由は音楽性の違い", .kana = "かいさんのりゆうはおんがくせいのちがい" },
+    .{ .display = "教科書を丸暗記して試験に挑む", .kana = "きょうかしょをまるあんきしてしけんにいどむ" },
+    .{ .display = "早期発見で一命を取り留める", .kana = "そうきはっけんでいちめいをとりとめる" },
+    .{ .display = "この先は未知の領域だ", .kana = "このさきはみちのりょういきだ" },
+    .{ .display = "地球外生命体の痕跡", .kana = "ちきゅうがいせいめいたいのこんせき" },
+    .{ .display = "進化論の父ダーウィン", .kana = "しんかろんのちちだーうぃん" },
+    .{ .display = "必殺パンチをお見舞いする", .kana = "ひっさつぱんちをおみまいする" },
+    .{ .display = "領収書は結構です", .kana = "りょうしゅうしょはけっこうです" },
+    .{ .display = "最近の流行がわからない", .kana = "さいきんのりゅうこうがわからない" },
+    .{ .display = "損害賠償請求", .kana = "そんがいばいしょうせいきゅう" },
+    .{ .display = "携帯電話の電源をお切りください", .kana = "けいたいでんわのでんげんをおきりください" },
+    .{ .display = "素人質問で恐縮ですが", .kana = "しろうとしつもんできょうしゅくですが" },
+    .{ .display = "目の前が真っ暗になった", .kana = "めのまえがまっくらになった" },
+    .{ .display = "人間は考える葦である", .kana = "にんげんはかんがえるあしである" },
+    .{ .display = "タラバガニはヤドカリの仲間", .kana = "たらばがにはやどかりのなかま" },
+    .{ .display = "郵便局はどこですか？", .kana = "ゆうびんきょくはどこですか？" },
+    .{ .display = "スイカと花火は夏の風物詩", .kana = "すいかとはなびはなつのふうぶつし" },
+    .{ .display = "１％のひらめきと９９％の努力", .kana = "１％のひらめきと９９％の努力" },
 };
-
-const Pair = struct {
-    display: [:0]const u8,
-    kana: [:0]const u8,
-};
-
-fn init(gpa: Allocator, io: Io, pairs: []const Pair) !@This() {
-    const rand_source: Random.IoSource = .{ .io = io };
-    const rand = rand_source.interface();
-
-    var indices = try gpa.alloc(usize, pairs.len);
-    defer gpa.free(indices);
-
-    for (indices, 0..) |_, i| {
-        indices[i] = i;
-    }
-
-    rand.shuffle(usize, indices);
-
-    const ex_quota = @min(pairs.len, 20);
-    const exercises = try gpa.alloc(Exercise, ex_quota);
-    errdefer gpa.free(exercises);
-
-    for (indices[0..ex_quota], 0..) |index, i| {
-        const pair = pairs[index];
-        exercises[i] = try .init(gpa, pair.display, pair.kana);
-    }
-
-    return .{
-        .exercises = exercises,
-    };
-}
-
-pub fn initByLevel(gpa: Allocator, io: Io, level: Level) !@This() {
-    return switch (level) {
-        .basic => init(gpa, io, basic),
-        .normal => init(gpa, io, normal),
-        .expert => init(gpa, io, expert),
-    };
-}
-
-pub fn deinit(self: @This(), gpa: Allocator) void {
-    for (self.exercises) |exercise| {
-        exercise.deinit(gpa);
-    }
-    gpa.free(self.exercises);
-}
-
-pub fn getExercise(self: @This()) *Exercise {
-    return &self.exercises[self.current_exercise];
-}
