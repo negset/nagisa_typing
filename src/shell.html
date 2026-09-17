@@ -1,312 +1,287 @@
 <!doctype html>
 <html lang="ja">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
     <title>渚タイピング</title>
 
-    <meta name="title" content="渚タイピング">
-    <meta name="description" content="タイピング練習のためのサイト">
-    <meta name="viewport" content="width=device-width">
-
-    <!--link rel="shortcut icon" href=""-->
+    <meta name="title" content="渚タイピング" />
+    <meta name="description" content="タイピング練習のためのサイト" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <style>
-      body { font-family: arial; margin: 0; padding: unset; }
-
-      #header {
-        width: 100%;
-        height: 80px;
-        background-color: #888888;
+      body {
+        font-family: arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #222;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        overflow: hidden;
       }
 
-      /* NOTE: raylib logo is embedded in the page as base64 png image */
-      #logo {
-        width:64px;
-        height:64px;
-        float:left;
-        position:relative;
-        margin:10px;
-        background-image:url('data:image/png;base64,\
-iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADs\
-MAAA7DAcdvqGQAAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAA7JJREFUaEPtk0FyWzEMQ+37X7fZhxX4\
-YY3AD1OKF1nkzTRlSBCCLeVBnvl/AUdaELOunPno1kts1kixdtEZKVs+xIxebBkZsVknn/L5nFGDLR8T4zVC9fX19S/+tTFijr\
-YK4jUjbPUtqBHpnEE6PkZD7jQZV8n5Recw1XQKciZuPaEtR6UjNs5ENVGMsBVqpPtER0ZMOhpyp8m4YL4OjD9yxsyZxnQycfMJ\
-ETNSzsRE1+dihK3YMiJmpHTW3xpmXPC6BXlCHfqnBlsjY5hxf/6EVEOM2BTEi0fYCX4ONSI6Kq3Blg/prIOMq2CsRur4KQ0x64\
-SdjOufEDEdHZGOhmz5RDHCVqhRuQ86YsVskbc+GXchLiHnFyYH+UigQDVGnImbT8hwFkgLg2qiM8JO6Ylx1FNLa3DmYwqCTsZd\
-4BPqGJG7MwKzpeiWKTKxXkLMVE3MSOmsdwxLH6Rd/wCCLSNDx6djeKfJuArGeoYamRHpaEjnCBYZVy8hZqo2GI36qPjsiOiMsB\
-XGcev4Mx9TLGTchbgEjN/uz6jGrBvDjg+LTNx8Qp2CbG2xMKgmOiPslJ4Yxx+eSnSkzlosZNwFPiHl7FRTkLNRJm4+IeVM0ymI\
-H42wE/wcKalQI4MRl4EW3p6VcRWMua8F6WjIlqZDxvVPiHQ6CjVbYkV9ohhhp/Rk1wiYgpyJ78i4CsZbjkb8Qx+ihvzu3RPaKo\
-gZkY6GlEeMsKdPSOFIC8VoOusg44L5c+T8ouOoGhWbdWJ8tMi4egkxo4hoh2yNTGf3iIyr5Lyic4bRENXo+lvDjAt4C1Hk/OKt\
-UaAj0+n4dMSZ2D+hrYJsaYh2SClG2jV9kJKKzhlGQ1SsW299Mq6C8dYZHTExo8fzieI5ivipYnYy7nwJqGKmOYyRwfiUBXITfh\
-5qSHRGWEkfqJqURgvsdHyWYv7Ko8DnYYegk3EB00cxprdrJRzFd7YQzawu8L1GMTYS/KpPaAFTkIn1EmJmspJSs5xBzSyGhlkB\
-mlxfNFiP5mw4wlbMh4F5Ddxp5jNINBdCEz9zPOC1zD7Q0HBdmXndwv0TMtydEdzlWJT4VZ8Qt9Qn4/onxMIwa5ZYGJU5yufBiC\
-jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaBBfOTCGHM2aEbZi1+gO\
-1XTWVXMnzrhAn5DSOZVsiQlHnSITKzGj6DeTcZWc/3oy7h9//PF4PL4BlvsWrb6RE+oAAAAASUVORK5CYII=');
-      }
-
-      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-      div.emscripten { text-align: center; }
-
-      /* NOTE: Canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten {
-        border: 0px none;
-        background: white;
-        width: 800px;
+      /* ロード中メッセージ・オーディオ解除メッセージのエリア */
+      #message-container {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        z-index: 10;
+        pointer-events: none;
       }
 
       .spinner {
         height: 30px;
         width: 30px;
-        margin: 0;
-        margin-top: 20px;
-        margin-left: 20px;
+        margin: 0 auto 10px auto;
         display: inline-block;
-        vertical-align: top;
-        -webkit-animation: rotation .8s linear infinite;
-        -moz-animation: rotation .8s linear infinite;
-        -o-animation: rotation .8s linear infinite;
+        vertical-align: middle;
+        -webkit-animation: rotation 0.8s linear infinite;
+        -moz-animation: rotation 0.8s linear infinite;
+        -o-animation: rotation 0.8s linear infinite;
         animation: rotation 0.8s linear infinite;
-        border-left: 5px solid black;
-        border-right: 5px solid black;
-        border-bottom: 5px solid black;
+        border-left: 5px solid #fff;
+        border-right: 5px solid #fff;
+        border-bottom: 5px solid #fff;
         border-top: 5px solid red;
         border-radius: 100%;
-        background-color: rgb(245, 245, 245);
-      }
-      @-webkit-keyframes rotation {
-        from {-webkit-transform: rotate(0deg);}
-        to {-webkit-transform: rotate(360deg);}
-      }
-      @-moz-keyframes rotation {
-        from {-moz-transform: rotate(0deg);}
-        to {-moz-transform: rotate(360deg);}
-      }
-      @-o-keyframes rotation {
-        from {-o-transform: rotate(0deg);}
-        to {-o-transform: rotate(360deg);}
+        background-color: transparent;
       }
       @keyframes rotation {
-        from {transform: rotate(0deg);}
-        to {transform: rotate(360deg);}
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       #status {
-        display: inline-block;
-        vertical-align: top;
-        margin-top: 30px;
-        margin-left: 20px;
         font-weight: bold;
-        color: rgb(40, 40, 40);
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      }
+
+      /* ゲーム画面の中央揃えと800x600のレスポンシブ縮小 */
+      .emscripten_border {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* NOTE: Canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas.emscripten {
+        border: 0px none;
+        background: black;
+        width: 800px;
+        height: 600px;
+        max-width: 100vw;
+        max-height: 100vh;
+        object-fit: contain;
+        outline: none;
       }
 
       #progress {
-        height: 0px;
-        width: 0px;
-      }
-
-      #controls {
-        display: inline-block;
-        float: right;
-        vertical-align: top;
-        margin-top: 15px;
-        margin-right: 20px;
-      }
-
-      #output {
-        border-left: 0px none;
-        border-right: 0px none;
-        border-bottom: 0px none;
-        padding-left: 0;
-        padding-right: 0;
-        width: 100%;
-        height: 140px;
-        margin: 0 auto;
-        margin-top: 10px;
-        display: block;
-        background-color: black;
-        color: rgb(37, 174, 38);
-        font-family: 'Lucida Console', Monaco, monospace;
-        outline: none;
         display: none;
       }
 
-      input[type=button] {
-        background-color: lightgray;
-        border: 4px solid darkgray;
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-        width: 140px;
-        height: 50px;
-        margin-left: 10px;
-      }
-
-      input[type=button]:hover {
-        background-color: #f5f5f5ff;
-        border-color: black;
+      #output {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <div id="header">
-        <a id="logo" href="https://www.raylib.com"></a>
-
-        <div class="spinner" id='spinner'></div>
-        <div class="emscripten" id="status">Downloading...</div>
-
-        <span id='controls'>
-          <span><input type="button" value="📜 SOURCE CODE" onclick="location.href='https://github.com/raysan5/raylib';"/></span>
-          <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.canvas.requestFullscreen()"></span>
-          <span><input type="button" id="btn-audio" value="🔇 MUTE" onclick="toggleAudio()"></span>
-        </span>
-
-        <div class="emscripten">
-          <progress value="0" max="100" id="progress" hidden=1></progress>
-        </div>
+    <!-- ロード中および音声インタラクション要求のメッセージ表示領域 -->
+    <div id="message-container">
+      <div class="spinner" id="spinner"></div>
+      <div id="status">Downloading...</div>
     </div>
 
+    <!-- エラー防止用の隠しprogress要素 -->
+    <progress value="0" max="100" id="progress" hidden></progress>
+
     <div class="emscripten_border">
-      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+      <canvas
+        class="emscripten"
+        id="canvas"
+        oncontextmenu="event.preventDefault()"
+        tabindex="-1"
+      ></canvas>
     </div>
 
     <textarea id="output" rows="8"></textarea>
 
-    <script type='text/javascript' src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"> </script>
-    <script type='text/javascript'>
-        function saveFileFromMEMFSToDisk(memoryFSname, localFSname)     // This can be called by C/C++ code
-        {
-            var isSafari = false; // Not supported, navigator.userAgent access is being restricted
-            //var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            var data = FS.readFile(memoryFSname);
-            var blob;
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js/dist/FileSaver.min.js"
+    ></script>
+    <script type="text/javascript">
+      function saveFileFromMEMFSToDisk(memoryFSname, localFSname) {
+        // This can be called by C/C++ code
+        var isSafari = false;
+        var data = FS.readFile(memoryFSname);
+        var blob;
 
-            if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
-            else blob = new Blob([data.buffer], { type: "application/octet-binary" });
+        if (isSafari)
+          blob = new Blob([data.buffer], { type: "application/octet-stream" });
+        else
+          blob = new Blob([data.buffer], { type: "application/octet-binary" });
 
-            // NOTE: SaveAsDialog is a browser setting. For example, in Google Chrome,
-            // in Settings/Advanced/Downloads section you have a setting:
-            // 'Ask where to save each file before downloading' - which you can set true/false.
-            // If you enable this setting it would always ask you and bring the SaveAsDialog
-            saveAs(blob, localFSname);
-        }
+        saveAs(blob, localFSname);
+      }
     </script>
-    <script type='text/javascript'>
-        var statusElement = document.querySelector('#status');
-        var progressElement = document.querySelector('#progress');
-        var spinnerElement = document.querySelector('#spinner');
-        var Module = {
-            preRun: [],
-            postRun: [],
-            print: (function() {
-                var element = document.querySelector('#output');
+    <script type="text/javascript">
+      var statusElement = document.querySelector("#status");
+      var progressElement = document.querySelector("#progress");
+      var spinnerElement = document.querySelector("#spinner");
+      var messageContainer = document.querySelector("#message-container");
 
-                if (element) element.value = '';    // Clear browser cache
+      var isLoaded = false; // ロード完了フラグ
 
-                return function(text) {
-                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
-                    // These replacements are necessary if you render to raw HTML
-                    //text = text.replace(/&/g, "&amp;");
-                    //text = text.replace(/</g, "&lt;");
-                    //text = text.replace(/>/g, "&gt;");
-                    //text = text.replace('\n', '<br>', 'g');
-                    console.log(text);
+      var Module = {
+        preRun: [],
+        postRun: [
+          function () {
+            isLoaded = true;
+            // スピナーを隠し、音声インタラクションを促すメッセージに固定
+            spinnerElement.style.display = "none";
+            statusElement.innerHTML =
+              "音声を有効にするには画面をクリックしてください。";
 
-                    if (element) {
-                        element.value += text + "\n";
-                        element.scrollTop = element.scrollHeight; // focus on bottom
-                    }
-                };
-            })(),
-            printErr: function(text) {
-                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            // ユーザーが一度画面をクリックしたらメッセージを消去
+            const removeListener = () => {
+              messageContainer.style.display = "none";
+              window.removeEventListener("click", removeListener);
+            };
+            window.addEventListener("click", removeListener);
+          },
+        ],
+        print: (function () {
+          var element = document.querySelector("#output");
 
-                console.error(text);
+          if (element) element.value = "";
+
+          return function (text) {
+            if (arguments.length > 1)
+              text = Array.prototype.slice.call(arguments).join(" ");
+            console.log(text);
+
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight;
+            }
+          };
+        })(),
+        printErr: function (text) {
+          if (arguments.length > 1)
+            text = Array.prototype.slice.call(arguments).join(" ");
+          console.error(text);
+        },
+        canvas: (function () {
+          var canvas = document.querySelector("#canvas");
+          canvas.addEventListener(
+            "webglcontextlost",
+            function (e) {
+              alert("WebGL context lost. You will need to reload the page.");
+              e.preventDefault();
             },
-            canvas: (function() {
-                var canvas = document.querySelector('#canvas');
+            false,
+          );
+          return canvas;
+        })(),
+        setStatus: function (text) {
+          // すでにロードが完了している場合は、後から来る空文字や初期化ステータスで上書きしない
+          if (isLoaded) return;
 
-                // As a default initial behavior, pop up an alert when webgl context is lost.
-                // To make your application robust, you may want to override this behavior before shipping!
-                // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-                canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+          if (!Module.setStatus.last)
+            Module.setStatus.last = { time: Date.now(), text: "" };
+          if (text === Module.setStatus.last.text) return;
 
-                return canvas;
-            })(),
-            setStatus: function(text) {
-                if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
-                if (text === Module.setStatus.last.text) return;
+          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+          var now = Date.now();
 
-                var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-                var now = Date.now();
+          if (m && now - Module.setStatus.last.time < 30) return;
 
-                if (m && now - Module.setStatus.last.time < 30) return; // If this is a progress update, skip it if too soon
+          Module.setStatus.last.time = now;
+          Module.setStatus.last.text = text;
 
-                Module.setStatus.last.time = now;
-                Module.setStatus.last.text = text;
+          if (m) {
+            text = m[1];
+            if (progressElement) {
+              progressElement.value = parseInt(m[2]) * 100;
+              progressElement.max = parseInt(m[4]) * 100;
+            }
+            spinnerElement.hidden = false;
+          } else {
+            if (progressElement) {
+              progressElement.value = null;
+              progressElement.max = null;
+            }
+            if (!text) spinnerElement.style.display = "none";
+          }
 
-                if (m) {
-                    text = m[1];
-                    progressElement.value = parseInt(m[2])*100;
-                    progressElement.max = parseInt(m[4])*100;
-                    progressElement.hidden = true;
-                    spinnerElement.hidden = false;
-                } else {
-                    progressElement.value = null;
-                    progressElement.max = null;
-                    progressElement.hidden = true;
-                    if (!text) spinnerElement.style.display = 'none';
-                }
+          statusElement.innerHTML = text;
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: function (left) {
+          if (isLoaded) return;
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(
+            left
+              ? "Preparing... (" +
+                  (this.totalDependencies - left) +
+                  "/" +
+                  this.totalDependencies +
+                  ")"
+              : "All downloads complete.",
+          );
+        },
+      };
 
-                statusElement.innerHTML = text;
-            },
-            totalDependencies: 0,
-            monitorRunDependencies: function(left) {
-                this.totalDependencies = Math.max(this.totalDependencies, left);
-                Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
-            },
-            //noInitialRun: true
+      Module.setStatus("Downloading...");
+
+      window.onerror = function () {
+        Module.setStatus("Exception thrown, see JavaScript console");
+        spinnerElement.style.display = "none";
+        Module.setStatus = function (text) {
+          if (text) Module.printErr("[post-exception status] " + text);
         };
-
-        Module.setStatus('Downloading...');
-
-        window.onerror = function() {
-            Module.setStatus('Exception thrown, see JavaScript console');
-            spinnerElement.style.display = 'none';
-            Module.setStatus = function(text) { if (text) Module.printErr('[post-exception status] ' + text); };
-        };
+      };
     </script>
 
-    <!-- REF: https://developers.google.com/web/updates/2018/11/web-audio-autoplay -->
-    <script type='text/javascript'>
-        var audioBtn = document.querySelector('#btn-audio');
+    <!-- 音声コンテキストの自動解除・自動再開用スクリプト -->
+    <script type="text/javascript">
+      const audioContexList = [];
+      (function () {
+        self.AudioContext = new Proxy(self.AudioContext, {
+          construct(target, args) {
+            const result = new target(...args);
+            audioContexList.push(result);
+            return result;
+          },
+        });
+      })();
 
-        // An array of all contexts to resume on the page
-        const audioContexList = [];
-        (function() {
-            // A proxy object to intercept AudioContexts and
-            // add them to the array for tracking and resuming later
-            self.AudioContext = new Proxy(self.AudioContext, {
-                construct(target, args) {
-                    const result = new target(...args);
-                    audioContexList.push(result);
-                    if (result.state == "suspended") audioBtn.value = "🔈 RESUME";
-                    return result;
-                }
-            });
-        })();
-
-        function toggleAudio() {
-            var resumed = false;
-            audioContexList.forEach(ctx => {
-                if (ctx.state == "suspended") { ctx.resume(); resumed = true; }
-                else if (ctx.state == "running") ctx.suspend();
-            });
-
-            if (resumed) audioBtn.value = "🔇 MUTE";
-            else audioBtn.value = "🔈 RESUME";
-        }
+      // 画面のどこかがクリックされた時にすべてのサスペンド状態のAudioContextを再開する
+      window.addEventListener(
+        "pointerdown",
+        () => {
+          audioContexList.forEach((ctx) => {
+            if (ctx.state == "suspended") {
+              ctx.resume();
+            }
+          });
+        },
+        { once: true },
+      );
     </script>
     {{{ SCRIPT }}}
   </body>
