@@ -58,15 +58,15 @@ pub fn update(_: *@This()) !Transition {
 
 pub fn draw(self: *@This()) void {
     common.drawText("成績", .{ .x = 400, .y = 80 }, .center_middle, 48, .black);
-    common.drawText("レベル:", .{ .x = 200, .y = 180 }, .left_top, 36, .black);
-    common.drawText(self.level, .{ .x = 600, .y = 180 }, .right_top, 36, .black);
-    common.drawText("正しいタイプ:", .{ .x = 200, .y = 225 }, .left_top, 36, .black);
-    common.drawText(self.correct, .{ .x = 600, .y = 225 }, .right_top, 36, .black);
-    common.drawText("ミスタイプ:", .{ .x = 200, .y = 270 }, .left_top, 36, .black);
-    common.drawText(self.miss, .{ .x = 600, .y = 270 }, .right_top, 36, .black);
-    common.drawText("時間:", .{ .x = 200, .y = 315 }, .left_top, 36, .black);
-    common.drawText(self.time, .{ .x = 600, .y = 315 }, .right_top, 36, .black);
-    common.drawText("速度:", .{ .x = 200, .y = 360 }, .left_top, 36, .black);
-    common.drawText(self.speed, .{ .x = 600, .y = 360 }, .right_top, 36, .black);
+    common.drawText("レベル:", .{ .x = 180, .y = 180 }, .left_top, 36, .black);
+    common.drawText(self.level, .{ .x = 620, .y = 180 }, .right_top, 36, .black);
+    common.drawText("正しい入力:", .{ .x = 180, .y = 225 }, .left_top, 36, .black);
+    common.drawText(self.correct, .{ .x = 620, .y = 225 }, .right_top, 36, .black);
+    common.drawText("ミス入力:", .{ .x = 180, .y = 270 }, .left_top, 36, .black);
+    common.drawText(self.miss, .{ .x = 620, .y = 270 }, .right_top, 36, .black);
+    common.drawText("経過時間:", .{ .x = 180, .y = 315 }, .left_top, 36, .black);
+    common.drawText(self.time, .{ .x = 620, .y = 315 }, .right_top, 36, .black);
+    common.drawText("入力速度:", .{ .x = 180, .y = 360 }, .left_top, 36, .black);
+    common.drawText(self.speed, .{ .x = 620, .y = 360 }, .right_top, 36, .black);
     common.drawText("SPACE で次の画面へ", .{ .x = 400, .y = 540 }, .center_middle, 32, .dark_gray);
 }
