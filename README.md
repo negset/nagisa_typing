@@ -1,21 +1,26 @@
-# 渚タイピング
+# nagisa_typing (渚タイピング)
 
-https://negset.com/nagisa_typing/
+A dead-simple Romaji typing game, available on Windows and the web.
 
-## Third-Party License
+## Download
 
-このプロジェクトには、以下の第三者提供素材が含まれています。
+WIP
 
-### Kosugi Maru
+## Web Playground
 
-Copyright 2010 The Kosugi Maru Project Authors  
-Licensed under Apache License 2.0.  
-Modified from the original, converted to a bitmap font.  
-https://www.apache.org/licenses/LICENSE-2.0
+You can play the web version [here](https://negset.com/nagisa_typing/).
 
-### Oculus Audio Pack 1
+## Build
 
-Copyright 2015 Oculus VR, LLC.  
-Licensed under CC BY 4.0.  
-Modified from the original.  
-https://creativecommons.org/licenses/by/4.0/
+- Desktop
+    ```
+    zig build
+    ```
+- Web
+    ```
+    zig build -Dtarget=wasm32-emscripten
+    ```
+
+## Third-Party Licenses
+
+See [THIRD_PARTY_NOTICES](https://github.com/negset/nagisa_typing/blob/master/THIRD_PARTY_NOTICES).
