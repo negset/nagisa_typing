@@ -46,7 +46,15 @@ pub const Transition = union(enum) {
             Title => void,
             Select => void,
             Play => struct { level: Level },
-            Result => struct { level: Level, correct: u32, miss: u32, time: Duration },
+            Result => struct {
+                level: Level,
+                correct: u32,
+                miss: u32,
+                max_combo: u32,
+                time: Duration,
+                kps: f32,
+                score: u32,
+            },
             else => @compileError("Unknown scene type."),
         };
     }

@@ -39,7 +39,19 @@ pub const Exercise = struct {
     }
 };
 
-pub const Level = enum(u8) { basic, normal, expert };
+pub const Level = enum(u8) {
+    basic,
+    normal,
+    expert,
+
+    pub fn toString(self: Level) [:0]const u8 {
+        return switch (self) {
+            .basic => "BASIC",
+            .normal => "NORMAL",
+            .expert => "EXPERT",
+        };
+    }
+};
 
 const Pair = struct {
     display: [:0]const u8,
@@ -227,7 +239,7 @@ const normal: []const Pair = &.{
     .{ .display = "ちゃうんちゃう？", .kana = "ちゃうんちゃう？" },
     .{ .display = "スイートポテト", .kana = "すいーとぽてと" },
     .{ .display = "利用者の声", .kana = "りようしゃのこえ" },
-    .{ .display = "なすの煮びたし", .kana = "なすのにびたし" },
+    .{ .display = "茄子の煮びたし", .kana = "なすのにびたし" },
     .{ .display = "労働基準法", .kana = "ろうどうきじゅんほう" },
     .{ .display = "ヴィンテージ加工", .kana = "ゔぃんてーじかこう" },
     .{ .display = "煙突のついた家", .kana = "えんとつのついたいえ" },

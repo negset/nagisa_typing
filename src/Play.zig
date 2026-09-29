@@ -13,13 +13,25 @@ const common = @import("common.zig");
 
 lesson: Lesson = undefined,
 level: Level = undefined,
+
 correct: u32 = 0,
 miss: u32 = 0,
+
+combo: u32 = 0,
+max_combo: u32 = 0,
+combo_bonus: u32 = 0,
+combo_text: [:0]const u8 = undefined,
+combo_text_buf: [16]u8 = undefined,
+
+combo_flash: f32 = 0,
 damage_flash: f32 = 0,
+
 typed_keys: ArrayList(u8),
 start: Timestamp = undefined,
+
 kana_iter: Utf8Iterator = undefined,
 highlight: rl.Rectangle = undefined,
+
 se_correct: rl.Sound = undefined,
 se_miss: rl.Sound = undefined,
 
@@ -47,6 +59,10 @@ pub fn enter(
     self.level = data.level;
     self.correct = 0;
     self.miss = 0;
+    self.combo = 0;
+    self.combo_flash = 0;
+    self.max_combo = 0;
+    self.combo_bonus = 0;
     self.damage_flash = 0;
     self.clearTypedKeys();
     self.resetHighlight();
@@ -69,6 +85,17 @@ fn onIncorrectInput(self: *@This()) void {
     self.damage_flash = 0.3;
 }
 
+fn appendTypedKeys(self: *@This(), key: u8) void {
+    _ = self.typed_keys.pop(); // Pop sentinel.
+    self.typed_keys.appendAssumeCapacity(key);
+    self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
+}
+
+fn clearTypedKeys(self: *@This()) void {
+    self.typed_keys.clearRetainingCapacity();
+    self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
+}
+
 fn updateExercise(self: *@This(), key: u8) bool {
     const ex = self.lesson.getExercise();
 
@@ -76,7 +103,10 @@ fn updateExercise(self: *@This(), key: u8) bool {
         ex.current_state = next;
         self.onCorrectInput(key);
         const len = ex.getState().fragment_len;
-        if (len > 0) self.updateHighlight(len);
+        if (len > 0) {
+            self.incrementCombo();
+            self.updateHighlight(len);
+        }
         return true;
     }
 
@@ -84,13 +114,15 @@ fn updateExercise(self: *@This(), key: u8) bool {
     if (ex.getState().transition(0)) |epsilon| {
         if (ex.states[epsilon].transition(key)) |next| {
             ex.current_state = next;
-            self.updateHighlight(ex.states[epsilon].fragment_len);
             self.onCorrectInput(key);
+            self.incrementCombo();
+            self.updateHighlight(ex.states[epsilon].fragment_len);
             return true;
         }
     }
 
     self.onIncorrectInput();
+    self.combo = 0;
     return false;
 }
 
@@ -103,15 +135,21 @@ fn goNextExercise(self: *@This()) bool {
     return false;
 }
 
-fn appendTypedKeys(self: *@This(), key: u8) void {
-    _ = self.typed_keys.pop(); // Pop sentinel.
-    self.typed_keys.appendAssumeCapacity(key);
-    self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
-}
+fn incrementCombo(self: *@This()) void {
+    self.combo += 1;
+    self.max_combo = @max(self.max_combo, self.combo);
 
-fn clearTypedKeys(self: *@This()) void {
-    self.typed_keys.clearRetainingCapacity();
-    self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
+    if (self.combo > 0 and @mod(self.combo, 10) == 0) {
+        self.combo_text = std.fmt.bufPrintSentinel(
+            &self.combo_text_buf,
+            "{} COMBO!!",
+            .{self.combo},
+            0,
+        ) catch @panic("No space at combo_text_buf.");
+
+        self.combo_bonus += @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.combo))));
+        self.combo_flash = 2.0;
+    }
 }
 
 fn resetHighlight(self: *@This()) void {
@@ -150,6 +188,7 @@ fn updateHighlight(self: *@This(), len: usize) void {
 }
 
 pub fn update(self: *@This(), io: Io) !Transition {
+    self.combo_flash = @max(0.0, self.combo_flash - rl.getFrameTime() * 2.0);
     self.damage_flash = @max(0.0, self.damage_flash - rl.getFrameTime() * 1.0);
 
     if (rl.getKeyPressed() == .escape) {
@@ -166,13 +205,33 @@ pub fn update(self: *@This(), io: Io) !Transition {
                 self.clearTypedKeys();
                 self.resetHighlight();
             } else {
+                const time = Timestamp.untilNow(self.start, io, .awake);
+                const kps = std.time.ns_per_s * @as(
+                    f32,
+                    @floatFromInt(self.correct),
+                ) / @as(
+                    f32,
+                    @floatFromInt(time.nanoseconds),
+                );
+                const penalty = @as(
+                    u32,
+                    @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.miss)))),
+                ) * 10;
+                const score = @as(
+                    u32,
+                    @intFromFloat(kps * 100),
+                ) + self.combo_bonus -| penalty;
+
                 // Go to result scene.
                 return .{
                     .to_result = .{
                         .level = self.level,
                         .correct = self.correct,
                         .miss = self.miss,
-                        .time = Timestamp.untilNow(self.start, io, .awake),
+                        .max_combo = self.max_combo,
+                        .time = time,
+                        .kps = kps,
+                        .score = score,
                     },
                 };
             }
@@ -185,6 +244,16 @@ pub fn update(self: *@This(), io: Io) !Transition {
 pub fn draw(self: *@This()) void {
     const ex = self.lesson.getExercise();
     const text = self.typed_keys.items[0 .. self.typed_keys.items.len - 1 :0];
+
+    if (self.combo_flash > 0) {
+        common.drawText(
+            self.combo_text,
+            .{ .x = 400, .y = 40 },
+            .center_middle,
+            24,
+            rl.fade(.red, self.combo_flash),
+        );
+    }
 
     rl.drawRectangleRounded(self.highlight, 0.5, 8, .yellow);
 
