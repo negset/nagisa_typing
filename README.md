@@ -4,22 +4,25 @@ A dead-simple Romaji typing game, available on Windows and the web.
 
 ## Download
 
-WIP
+Download the Windows version [here](https://github.com/negset/nagisa_typing/releases).
 
 ## Web Playground
 
-You can play the web version [here](https://negset.com/nagisa_typing/).
+Play the web version [here](https://negset.com/nagisa_typing/).
 
 ## Build
 
-- Desktop
-    ```
-    zig build
-    ```
-- Web
-    ```
-    zig build -Dtarget=wasm32-emscripten
-    ```
+#### Desktop
+
+```
+zig build
+```
+
+#### Web
+
+```
+zig build -Dtarget=wasm32-emscripten
+```
 
 ## Third-Party Licenses
 
