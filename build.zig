@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) !void {
 
     const run_step = b.step("run", "Run the app");
 
-    //web exports are completely separate
+    // Web exports are completely separate.
     if (target.query.os_tag == .emscripten) {
         const emsdk = rlz.emsdk;
         const wasm = b.addLibrary(.{
@@ -37,7 +37,7 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
             .flags = emcc_flags,
             .settings = emcc_settings,
-            // see https://github.com/raylib-zig/raylib-zig/issues/343
+            // See https://github.com/raylib-zig/raylib-zig/issues/343
             // .shell_file_path = emsdk.shell(raylib_dep),
             .shell_file_path = b.path("src/shell.html"),
             .install_dir = install_dir,
