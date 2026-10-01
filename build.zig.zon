@@ -1,6 +1,6 @@
 .{
     .name = .nagisa_typing,
-    .version = "1.0.1",
+    .version = "1.1.0",
     .fingerprint = 0x7c99f5e9be064c1a,
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
