@@ -2,6 +2,7 @@ const rl = @import("raylib");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
+const version = @import("build_config").version;
 
 const Transition = @import("scene.zig").Transition;
 const common = @import("common.zig");
@@ -39,5 +40,6 @@ pub fn update(_: *@This()) !Transition {
 pub fn draw(_: *@This()) void {
     common.drawText("渚タイピング", .{ .x = 400, .y = 200 }, .center_middle, 48, .black);
     common.drawText("SPACE ではじめる", .{ .x = 400, .y = 400 }, .center_middle, 36, .dark_gray);
-    common.drawText("© 2026 negset", .{ .x = 400, .y = 540 }, .center_middle, 24, .dark_gray);
+    common.drawText("© 2026 negset", .{ .x = 40, .y = 580 }, .left_bottom, 20, .dark_gray);
+    common.drawText("ver." ++ version, .{ .x = 760, .y = 580 }, .right_bottom, 20, .dark_gray);
 }

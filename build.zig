@@ -1,5 +1,6 @@
 const std = @import("std");
 const rlz = @import("raylib_zig");
+const version = @import("build.zig.zon").version;
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
@@ -25,6 +26,10 @@ pub fn build(b: *std.Build) !void {
     });
     exe_mod.addImport("raylib", raylib);
     exe_mod.addImport("zig_csv", zig_csv);
+
+    const options = b.addOptions();
+    options.addOption([]const u8, "version", version);
+    exe_mod.addOptions("build_config", options);
 
     const run_step = b.step("run", "Run the app");
 
