@@ -12,12 +12,19 @@ pub fn build(b: *std.Build) !void {
     const raylib = raylib_dep.module("raylib");
     const raylib_artifact = raylib_dep.artifact("raylib");
 
+    const zig_csv_dep = b.dependency("zig_csv", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zig_csv = zig_csv_dep.module("zig_csv");
+
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
     exe_mod.addImport("raylib", raylib);
+    exe_mod.addImport("zig_csv", zig_csv);
 
     const run_step = b.step("run", "Run the app");
 

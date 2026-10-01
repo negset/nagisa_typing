@@ -11,6 +11,7 @@ const Select = @import("select.zig");
 const Play = @import("Play.zig");
 const Result = @import("Result.zig");
 const common = @import("common.zig");
+const loader = @import("loader.zig");
 const windows = @import("windows.zig");
 
 var title: Title = undefined;
@@ -49,6 +50,20 @@ fn draw() void {
     }
 }
 
+fn initScenes(gpa: Allocator) !void {
+    title = try .init(gpa);
+    select = try .init(gpa);
+    play = try .init(gpa);
+    result = try .init(gpa);
+}
+
+fn deinitScenes(gpa: Allocator) void {
+    title.deinit(gpa);
+    select.deinit(gpa);
+    play.deinit(gpa);
+    result.deinit(gpa);
+}
+
 pub fn main(init: std.process.Init) !void {
     const gpa = init.gpa;
     const io = init.io;
@@ -71,15 +86,11 @@ pub fn main(init: std.process.Init) !void {
     try common.init();
     defer common.deinit();
 
-    title = try .init(gpa);
-    select = try .init(gpa);
-    play = try .init(gpa);
-    result = try .init(gpa);
-    defer title.deinit(gpa);
-    defer select.deinit(gpa);
-    defer play.deinit(gpa);
-    defer result.deinit(gpa);
+    try loader.loadAll(gpa, io);
+    defer loader.deinit(gpa);
 
+    try initScenes(gpa);
+    defer deinitScenes(gpa);
     defer current_scene.leave(gpa);
 
     // Main game loop

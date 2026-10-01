@@ -12,6 +12,10 @@
             .url = "git+https://github.com/emscripten-core/emsdk#4.0.9",
             .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
         },
+        .zig_csv = .{
+            .url = "git+https://github.com/DISTREAT/zig-csv#1a209e65534e504af661cd275f7362da25b0c393",
+            .hash = "zig_csv-2.0.0-W4JbozrYAAASYs63OFbdhxOAZu7mKMbl2e6xQp8xPq7o",
+        },
     },
     .paths = .{
         "build.zig",

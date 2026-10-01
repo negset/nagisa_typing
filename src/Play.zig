@@ -55,7 +55,7 @@ pub fn enter(
     io: Io,
     data: Transition.Data(@This()),
 ) !void {
-    self.lesson = try .initByLevel(gpa, io, data.level);
+    self.lesson = try .init(gpa, io, data.level);
     self.level = data.level;
     self.correct = 0;
     self.miss = 0;
