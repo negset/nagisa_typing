@@ -12,7 +12,7 @@ se_cursor: rl.Sound = undefined,
 
 pub fn init(_: Allocator) !@This() {
     return .{
-        .se_cursor = try rl.loadSound("resources/se/cursor.ogg"),
+        .se_cursor = try rl.loadSound("res/se/cursor.ogg"),
     };
 }
 

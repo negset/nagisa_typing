@@ -38,8 +38,8 @@ se_miss: rl.Sound = undefined,
 pub fn init(gpa: Allocator) !@This() {
     return .{
         .typed_keys = try .initCapacity(gpa, 50),
-        .se_correct = try rl.loadSound("resources/se/correct.ogg"),
-        .se_miss = try rl.loadSound("resources/se/miss.ogg"),
+        .se_correct = try rl.loadSound("res/se/correct.ogg"),
+        .se_miss = try rl.loadSound("res/se/miss.ogg"),
     };
 }
 

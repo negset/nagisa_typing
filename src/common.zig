@@ -7,11 +7,11 @@ pub var se_back: rl.Sound = undefined;
 pub var should_close = false;
 
 pub fn init() !void {
-    font = try rl.loadFont("resources/font/KosugiMaru.fnt");
+    font = try rl.loadFont("res/font/KosugiMaru.fnt");
     rl.setTextureFilter(font.texture, .bilinear);
     rl.setTextLineSpacing(20);
-    se_confirm = try rl.loadSound("resources/se/confirm.ogg");
-    se_back = try rl.loadSound("resources/se/back.ogg");
+    se_confirm = try rl.loadSound("res/se/confirm.ogg");
+    se_back = try rl.loadSound("res/se/back.ogg");
 }
 
 pub fn deinit() void {

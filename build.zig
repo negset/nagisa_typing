@@ -73,8 +73,8 @@ pub fn build(b: *std.Build) !void {
             .shell_file_path = b.path("src/shell.html"),
             .install_dir = install_dir,
             .preload_paths = &.{.{
-                .src_path = b.path("resources"),
-                .virtual_path = "resources",
+                .src_path = b.path("res"),
+                .virtual_path = "res",
             }},
             .out_file_name = wasm.name,
         });

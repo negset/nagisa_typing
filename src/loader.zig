@@ -17,7 +17,7 @@ pub fn init(gpa: Allocator, io: Io) !void {
 
     inline for (std.enums.values(Level)) |level| {
         const path = comptime level.path();
-        data[@intFromEnum(level)] = try load(gpa, io, path);
+        data[@backingInt(level)] = try load(gpa, io, path);
     }
 }
 
@@ -26,7 +26,7 @@ pub fn deinit() void {
 }
 
 pub fn getData(level: Level) Schema {
-    return data[@intFromEnum(level)];
+    return data[@backingInt(level)];
 }
 
 fn load(gpa: Allocator, io: Io, path: []const u8) !Schema {

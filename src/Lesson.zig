@@ -53,8 +53,8 @@ pub const Level = enum(u8) {
         };
     }
 
-    pub fn path(self: Level) []const u8 {
-        return "resources/" ++ self.toString() ++ ".zon";
+    pub fn path(comptime self: Level) []const u8 {
+        return "res/level/" ++ self.toString() ++ ".zon";
     }
 };
 
