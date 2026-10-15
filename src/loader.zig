@@ -1,89 +1,58 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const ArrayList = std.ArrayList;
+const ArenaAllocator = std.heap.ArenaAllocator;
+const Diagnostics = std.zon.parse.Diagnostics;
 const Io = std.Io;
-const zig_csv = @import("zig_csv");
-const STable = zig_csv.StructuredTable(
-    struct {
-        display: []const u8,
-        kana: []const u8,
-    },
-);
 
 const Level = @import("Lesson.zig").Level;
 
-pub const Pair = struct {
-    display: [:0]const u8,
-    kana: [:0]const u8,
+pub const Schema = [][2][:0]const u8;
 
-    fn init(gpa: Allocator, display: []const u8, kana: []const u8) !@This() {
-        return .{
-            .display = try gpa.dupeSentinel(u8, display, 0),
-            .kana = try gpa.dupeSentinel(u8, kana, 0),
-        };
+var arena_allocator: ArenaAllocator = undefined;
+const level_len = std.enums.values(Level).len;
+pub var data: [level_len]Schema = undefined;
+
+pub fn init(gpa: Allocator, io: Io) !void {
+    arena_allocator = .init(gpa);
+
+    inline for (std.enums.values(Level)) |level| {
+        const path = comptime level.path();
+        data[@intFromEnum(level)] = try load(gpa, io, path);
     }
+}
 
-    fn deinit(self: *@This(), gpa: Allocator) void {
-        gpa.free(self.display);
-        gpa.free(self.kana);
-    }
-};
+pub fn deinit() void {
+    arena_allocator.deinit();
+}
 
-const level_len = std.meta.fields(Level).len;
-pub var pairs_array: [level_len][]Pair = undefined;
+pub fn getData(level: Level) Schema {
+    return data[@intFromEnum(level)];
+}
 
-fn load(gpa: Allocator, io: Io, comptime path: []const u8) ![]Pair {
-    const content = try Io.Dir.cwd().readFileAlloc(
+fn load(gpa: Allocator, io: Io, path: []const u8) !Schema {
+    const arena = arena_allocator.allocator();
+
+    const source = try Io.Dir.cwd().readFileAllocOptions(
         io,
         path,
         gpa,
         .limited(2 * 1024 * 1024), // Max 2 MiB.
+        .of(u8),
+        0,
     );
-    defer gpa.free(content);
+    defer gpa.free(source);
 
-    var table: STable = .init(gpa, .default());
-    defer table.deinit();
-
-    try table.parse(content);
-
-    const count = table.getRowCount();
-    var result: ArrayList(Pair) = try .initCapacity(gpa, count);
-
-    for (0..count) |i| {
-        switch (try table.getRow(i)) {
-            .ok => |ok| {
-                result.appendAssumeCapacity(try .init(
-                    gpa,
-                    ok.value.display,
-                    ok.value.kana,
-                ));
-            },
-            .@"error" => @panic("Unexpected table row."),
-        }
-    }
-
-    return result.toOwnedSliceAssert();
-}
-
-pub fn loadAll(gpa: Allocator, io: Io) !void {
-    inline for (std.meta.fields(Level), 0..) |field, i| {
-        const level: Level = @enumFromInt(field.value);
-        pairs_array[i] = try load(gpa, io, level.path());
-
-        errdefer {
-            for (pairs_array[i]) |*pair| pair.deinit(gpa);
-            gpa.free(pairs_array[i]);
-        }
-    }
-}
-
-pub fn getPairs(level: Level) []const Pair {
-    return pairs_array[@intFromEnum(level)];
-}
-
-pub fn deinit(gpa: Allocator) void {
-    for (pairs_array) |level_pairs| {
-        for (level_pairs) |*pair| pair.deinit(gpa);
-        gpa.free(level_pairs);
-    }
+    var diagnostics: Diagnostics = undefined;
+    return std.zon.parse.fromSlice(Schema, .{
+        .gpa = gpa,
+        .arena = arena,
+        .source = source,
+        .diagnostics = &diagnostics,
+    }) catch |err| switch (err) {
+        error.OutOfMemory => return err,
+        error.ParseZon => {
+            diagnostics.log(path);
+            return err;
+        },
+    };
 }

@@ -1,6 +1,22 @@
 const std = @import("std");
 const rlz = @import("raylib_zig");
+const emsdk = rlz.emsdk;
 const version = @import("build.zig.zon").version;
+
+/// raylib's `emsdk.emccStep` always invokes `emcc.py`, which can't be spawned
+/// directly on Windows. Point the underlying run step at `emcc.bat` instead.
+fn fixEmccOnWindows(b: *std.Build, emcc_step: *std.Build.Step) !void {
+    if (@import("builtin").os.tag != .windows) return;
+    for (emcc_step.dependencies.items) |dep| {
+        const run = dep.cast(std.Build.Step.Run) orelse continue;
+        run.argv.items[0].lazy_path.lazy_path = try emsdk.path(
+            b,
+            "upstream/emscripten/emcc.bat",
+        );
+        return;
+    }
+    return error.EmccRunStepNotFound;
+}
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
@@ -10,14 +26,16 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
-    const raylib = raylib_dep.module("raylib");
-    const raylib_artifact = raylib_dep.artifact("raylib");
 
-    const zig_csv_dep = b.dependency("zig_csv", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const zig_csv = zig_csv_dep.module("zig_csv");
+    // raylib's build script bails out before creating its artifact when one of
+    // its lazy dependencies hasn't been fetched yet. Propagate so the build
+    // runner fetches them and reruns us.
+    if (b.graph.needed_lazy_dependencies.count() != 0)
+        return error.LazyDependencyNeeded;
+
+    const raylib = raylib_dep.module("raylib");
+
+    const raylib_artifact = raylib_dep.artifact("raylib");
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -25,7 +43,6 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     exe_mod.addImport("raylib", raylib);
-    exe_mod.addImport("zig_csv", zig_csv);
 
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
@@ -35,44 +52,51 @@ pub fn build(b: *std.Build) !void {
 
     // Web exports are completely separate.
     if (target.query.os_tag == .emscripten) {
-        const emsdk = rlz.emsdk;
         const wasm = b.addLibrary(.{
             .name = "nagisa_typing",
             .root_module = exe_mod,
         });
 
         const install_dir: std.Build.InstallDir = .{ .custom = "web" };
-        const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{ .optimize = optimize });
-        const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{ .optimize = optimize });
+        const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{
+            .optimize = optimize,
+            .asyncify = !std.mem.endsWith(u8, wasm.name, "web"),
+        });
+        const emcc_settings = emsdk.emccDefaultSettings(b.allocator, .{
+            .optimize = optimize,
+        });
 
-        const emcc_step = emsdk.emccStep(b, raylib_artifact, wasm, .{
+        const emcc_step = try emsdk.emccStep(b, &.{}, &.{ raylib_artifact, wasm }, .{
             .optimize = optimize,
             .flags = emcc_flags,
             .settings = emcc_settings,
-            // See https://github.com/raylib-zig/raylib-zig/issues/343
-            // .shell_file_path = emsdk.shell(raylib_dep),
             .shell_file_path = b.path("src/shell.html"),
             .install_dir = install_dir,
-            .embed_paths = &.{.{ .src_path = "resources/" }},
+            .preload_paths = &.{.{
+                .src_path = b.path("resources"),
+                .virtual_path = "resources",
+            }},
+            .out_file_name = wasm.name,
         });
-        b.getInstallStep().dependOn(emcc_step);
+        try fixEmccOnWindows(b, emcc_step);
 
-        const html_filename = try std.fmt.allocPrint(b.allocator, "{s}.html", .{wasm.name});
-        const emrun_step = emsdk.emrunStep(
+        const emrun_step = try emsdk.emrunStep(
             b,
-            b.getInstallPath(install_dir, html_filename),
+            b.graph.path(.install_prefix, b.fmt("{s}.html", .{wasm.name})),
             &.{},
         );
 
         emrun_step.dependOn(emcc_step);
         run_step.dependOn(emrun_step);
+
+        b.getInstallStep().dependOn(emcc_step);
     } else {
         const exe = b.addExecutable(.{
             .name = "nagisa_typing",
             .root_module = exe_mod,
         });
 
-        if (optimize != .Debug) {
+        if (optimize != .debug) {
             exe.subsystem = .windows;
         }
 

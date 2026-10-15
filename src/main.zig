@@ -86,8 +86,8 @@ pub fn main(init: std.process.Init) !void {
     try common.init();
     defer common.deinit();
 
-    try loader.loadAll(gpa, io);
-    defer loader.deinit(gpa);
+    try loader.init(gpa, io);
+    defer loader.deinit();
 
     try initScenes(gpa);
     defer deinitScenes(gpa);

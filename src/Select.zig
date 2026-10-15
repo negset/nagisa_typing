@@ -42,7 +42,7 @@ pub fn update(self: *@This()) !Transition {
         .space => {
             rl.playSound(common.se_confirm);
             return .{
-                .to_play = .{ .level = @enumFromInt(self.cursor) },
+                .to_play = .{ .level = @fromBackingInt(self.cursor) },
             };
         },
         .escape => {
@@ -59,7 +59,7 @@ pub fn draw(self: *@This()) void {
     common.drawText("レベル選択", .{ .x = 400, .y = 80 }, .center_middle, 48, .black);
 
     inline for (0..3) |i| {
-        const level: Level = @enumFromInt(i);
+        const level: Level = @fromBackingInt(@intCast(i));
         const color: rl.Color = if (self.cursor == i) .red else .black;
         common.drawText(
             level.toString(),

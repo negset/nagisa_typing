@@ -6,7 +6,6 @@ const Random = std.Random;
 const compiler = @import("compiler.zig");
 const State = compiler.State;
 const loader = @import("loader.zig");
-const Pair = loader.Pair;
 
 exercises: []Exercise,
 current_exercise: usize = 0,
@@ -55,17 +54,17 @@ pub const Level = enum(u8) {
     }
 
     pub fn path(self: Level) []const u8 {
-        return "resources/" ++ self.toString() ++ ".csv";
+        return "resources/" ++ self.toString() ++ ".zon";
     }
 };
 
 pub fn init(gpa: Allocator, io: Io, level: Level) !@This() {
-    const pairs = loader.getPairs(level);
+    const data = loader.getData(level);
 
     const rand_source: Random.IoSource = .{ .io = io };
     const rand = rand_source.interface();
 
-    var indices = try gpa.alloc(usize, pairs.len);
+    var indices = try gpa.alloc(usize, data.len);
     defer gpa.free(indices);
 
     for (indices, 0..) |_, i| {
@@ -74,18 +73,17 @@ pub fn init(gpa: Allocator, io: Io, level: Level) !@This() {
 
     rand.shuffle(usize, indices);
 
-    const ex_quota = @min(pairs.len, 20);
+    const ex_quota = @min(data.len, 20);
     const exercises = try gpa.alloc(Exercise, ex_quota);
     errdefer gpa.free(exercises);
 
     for (indices[0..ex_quota], 0..) |index, i| {
-        const pair = pairs[index];
-        exercises[i] = try .init(gpa, pair.display, pair.kana);
+        const display = data[index][0];
+        const kana = data[index][1];
+        exercises[i] = try .init(gpa, display, kana);
     }
 
-    return .{
-        .exercises = exercises,
-    };
+    return .{ .exercises = exercises };
 }
 
 pub fn deinit(self: @This(), gpa: Allocator) void {
