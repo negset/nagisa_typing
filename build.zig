@@ -58,6 +58,7 @@ pub fn build(b: *std.Build) !void {
         });
 
         const install_dir: std.Build.InstallDir = .{ .custom = "web" };
+        const html_filename = b.fmt("{s}.html", .{wasm.name});
         const emcc_flags = emsdk.emccDefaultFlags(b.allocator, .{
             .optimize = optimize,
             .asyncify = !std.mem.endsWith(u8, wasm.name, "web"),
@@ -76,13 +77,13 @@ pub fn build(b: *std.Build) !void {
                 .src_path = b.path("res"),
                 .virtual_path = "res",
             }},
-            .out_file_name = wasm.name,
+            .out_file_name = html_filename,
         });
         try fixEmccOnWindows(b, emcc_step);
 
         const emrun_step = try emsdk.emrunStep(
             b,
-            b.graph.path(.install_prefix, b.fmt("{s}.html", .{wasm.name})),
+            b.graph.path(.install_prefix, b.fmt("web/{s}.html", .{html_filename})),
             &.{},
         );
 
