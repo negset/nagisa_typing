@@ -111,14 +111,17 @@ fn updateExercise(self: *@This(), key: u8) bool {
     }
 
     // Epsilon transition.
-    if (ex.getState().transition(0)) |epsilon| {
-        if (ex.states[epsilon].transition(key)) |next| {
-            ex.current_state = next;
-            self.onCorrectInput(key);
-            self.incrementCombo();
-            self.updateHighlight(ex.states[epsilon].fragment_len);
-            return true;
-        }
+    switch (key) {
+        'a', 'i', 'u', 'e', 'o', 'y' => {},
+        else => if (ex.getState().transition(0)) |epsilon| {
+            if (ex.states[epsilon].transition(key)) |next| {
+                ex.current_state = next;
+                self.onCorrectInput(key);
+                self.incrementCombo();
+                self.updateHighlight(ex.states[epsilon].fragment_len);
+                return true;
+            }
+        },
     }
 
     self.onIncorrectInput();

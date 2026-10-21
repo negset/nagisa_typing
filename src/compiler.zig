@@ -862,41 +862,6 @@ fn consumeSokuonEntry(
     return entry;
 }
 
-fn rejectSingleN(
-    next_codepoint: ?u21,
-) bool {
-    const codepoint = next_codepoint orelse {
-        return true;
-    };
-
-    return switch (codepoint) {
-        // あ行
-        0x3042,
-        0x3044,
-        0x3046,
-        0x3048,
-        0x304A,
-
-        // な行
-        0x306a,
-        0x306b,
-        0x306c,
-        0x306d,
-        0x306e,
-
-        // や行
-        0x3084,
-        0x3086,
-        0x3088,
-
-        // ん
-        0x3093,
-        => true,
-
-        else => false,
-    };
-}
-
 // -----------------------------------------------------------------------------
 // Fragment construction
 // -----------------------------------------------------------------------------
@@ -965,31 +930,16 @@ fn appendStates(
     result: *ArrayList(State),
     states: []const State,
     fragment_len: usize,
-    reject_single_n: bool,
 ) !void {
     const state_offset = result.items.len;
 
     for (states, 0..) |state, i| {
-        var transition_count: usize = 0;
-
-        for (state.transitions) |transition| {
-            if (reject_single_n and transition.key == 0) {
-                continue;
-            }
-
-            transition_count += 1;
-        }
-
         const transitions = try gpa.alloc(
             Transition,
-            transition_count,
+            state.transitions.len,
         );
 
         for (state.transitions, 0..) |transition, j| {
-            if (reject_single_n and transition.key == 0) {
-                continue;
-            }
-
             transitions[j] = .{
                 .key = transition.key,
                 .next = transition.next + state_offset,
@@ -1039,18 +989,11 @@ pub fn compile(
             gpa.free(fragment.states);
         }
 
-        // Look ahead without consuming the next codepoint.
-        const next_codepoint = blk: {
-            var lookahead = iterator;
-            break :blk lookahead.nextCodepoint();
-        };
-
         try appendStates(
             gpa,
             &result,
             fragment.states,
             fragment.len,
-            rejectSingleN(next_codepoint),
         );
     }
 
