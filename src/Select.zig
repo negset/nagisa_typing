@@ -70,8 +70,9 @@ pub fn draw(self: *@This()) void {
         );
     }
 
-    common.drawText(
-        "↑/↓ or w/s で選択    SPACE で決定",
+    common.drawBlinkingText2(
+        "\u{e003}/\u{e004} or \u{e002}/\u{e001} で選択",
+        "\u{e000} で決定",
         .{ .x = 400, .y = 540 },
         .center_middle,
         32,

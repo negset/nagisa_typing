@@ -23,8 +23,8 @@ combo_bonus: u32 = 0,
 combo_text: [:0]const u8 = undefined,
 combo_text_buf: [16]u8 = undefined,
 
-combo_flash: f32 = 0,
-damage_flash: f32 = 0,
+combo_alpha: f32 = 0,
+damage_alpha: f32 = 0,
 
 typed_keys: ArrayList(u8),
 start: Timestamp = undefined,
@@ -60,10 +60,10 @@ pub fn enter(
     self.correct = 0;
     self.miss = 0;
     self.combo = 0;
-    self.combo_flash = 0;
+    self.combo_alpha = 0;
     self.max_combo = 0;
     self.combo_bonus = 0;
-    self.damage_flash = 0;
+    self.damage_alpha = 0;
     self.clearTypedKeys();
     self.resetHighlight();
     self.start = .now(io, .awake);
@@ -82,7 +82,7 @@ fn onCorrectInput(self: *@This(), key: u8) void {
 fn onIncorrectInput(self: *@This()) void {
     self.miss += 1;
     rl.playSound(self.se_miss);
-    self.damage_flash = 0.3;
+    self.damage_alpha = 0.3;
 }
 
 fn appendTypedKeys(self: *@This(), key: u8) void {
@@ -151,7 +151,7 @@ fn incrementCombo(self: *@This()) void {
         ) catch @panic("No space at combo_text_buf.");
 
         self.combo_bonus += @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.combo))));
-        self.combo_flash = 2.0;
+        self.combo_alpha = 2.0;
     }
 }
 
@@ -191,8 +191,8 @@ fn updateHighlight(self: *@This(), len: usize) void {
 }
 
 pub fn update(self: *@This(), io: Io) !Transition {
-    self.combo_flash = @max(0.0, self.combo_flash - rl.getFrameTime() * 2.0);
-    self.damage_flash = @max(0.0, self.damage_flash - rl.getFrameTime() * 1.0);
+    self.combo_alpha = @max(0.0, self.combo_alpha - rl.getFrameTime() * 2.0);
+    self.damage_alpha = @max(0.0, self.damage_alpha - rl.getFrameTime() * 1.0);
 
     if (rl.getKeyPressed() == .escape) {
         rl.playSound(common.se_back);
@@ -248,13 +248,13 @@ pub fn draw(self: *@This()) void {
     const ex = self.lesson.getExercise();
     const text = self.typed_keys.items[0 .. self.typed_keys.items.len - 1 :0];
 
-    if (self.combo_flash > 0) {
+    if (self.combo_alpha > 0) {
         common.drawText(
             self.combo_text,
             .{ .x = 400, .y = 40 },
             .center_middle,
             24,
-            rl.fade(.red, self.combo_flash),
+            rl.fade(.red, self.combo_alpha),
         );
     }
 
@@ -264,13 +264,13 @@ pub fn draw(self: *@This()) void {
     common.drawText(ex.kana, .{ .x = 400, .y = 290 }, .center_middle, 32, .dark_gray);
     common.drawText(text, .{ .x = 400, .y = 340 }, .center_middle, 32, .black);
 
-    if (self.damage_flash > 0.0) {
+    if (self.damage_alpha > 0.0) {
         rl.drawRectangle(
             0,
             0,
             rl.getScreenWidth(),
             rl.getScreenHeight(),
-            rl.fade(.red, self.damage_flash),
+            rl.fade(.red, self.damage_alpha),
         );
     }
 }

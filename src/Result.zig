@@ -69,5 +69,5 @@ pub fn draw(self: *@This()) void {
     common.drawText(self.kps, .{ .x = 620, .y = 385 }, .right_top, 32, .black);
     common.drawText("スコア:", .{ .x = 180, .y = 430 }, .left_top, 32, .black);
     common.drawText(self.score, .{ .x = 620, .y = 430 }, .right_top, 32, .black);
-    common.drawText("SPACE で次の画面へ", .{ .x = 400, .y = 540 }, .center_middle, 32, .dark_gray);
+    common.drawBlinkingText("\u{e000} で次の画面へ", .{ .x = 400, .y = 540 }, .center_middle, 32, .dark_gray);
 }

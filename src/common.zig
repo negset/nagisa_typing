@@ -1,4 +1,6 @@
 const builtin = @import("builtin");
+const std = @import("std");
+const pi = std.math.pi;
 const rl = @import("raylib");
 
 pub var font: rl.Font = undefined;
@@ -44,6 +46,34 @@ pub fn drawText(
         .right_top => .{ .x = -1.0, .y = 0 },
     });
     rl.drawTextEx(font, text, pos.add(offset), size, 0, color);
+}
+
+pub fn drawBlinkingText(
+    text: [:0]const u8,
+    pos: rl.Vector2,
+    text_align: TextAlign,
+    size: f32,
+    color: rl.Color,
+) void {
+    const time = rl.getTime();
+    const duration = 2.0;
+    const alpha: f32 = @floatCast(@abs(@sin(pi * time / duration)));
+    drawText(text, pos, text_align, size, color.fade(@floatCast(alpha)));
+}
+
+pub fn drawBlinkingText2(
+    text1: [:0]const u8,
+    text2: [:0]const u8,
+    pos: rl.Vector2,
+    text_align: TextAlign,
+    size: f32,
+    color: rl.Color,
+) void {
+    const time = rl.getTime();
+    const duration = 2.0;
+    const text = if (@mod(time, 2 * duration) < duration) text1 else text2;
+    const alpha: f32 = @floatCast(@abs(@sin(pi * time / duration)));
+    drawText(text, pos, text_align, size, color.fade(alpha));
 }
 
 pub fn requestExit() void {
