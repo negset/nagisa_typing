@@ -1,12 +1,12 @@
 .{
     .name = .nagisa_typing,
-    .version = "1.2.0",
+    .version = "1.3.0",
     .fingerprint = 0x7c99f5e9be064c1a,
     .minimum_zig_version = "0.17.0",
     .dependencies = .{
         .raylib_zig = .{
-            .url = "git+https://github.com/raylib-zig/raylib-zig?ref=devel#50d450099da664bedd7dcc6ed40204ab0bb861a5",
-            .hash = "raylib_zig-6.0.0-KE8REDSmBQAbyUv_Fh71wgvhQSP2zsmVxtPRLzCgIXWK",
+            .url = "git+https://github.com/raylib-zig/raylib-zig?ref=devel#28bbe30112f605da918db00eff53a75ce1aa9180",
+            .hash = "raylib_zig-6.2.0-KE8RELGmBQDX1v1DqBN57pNxJ-b-MIa1S-M7NXT9Eplr",
         },
         .emsdk = .{
             .url = "git+https://github.com/emscripten-core/emsdk#4.0.9",
