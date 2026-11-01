@@ -3,6 +3,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const Io = std.Io;
+const Duration = Io.Duration;
 const Timestamp = Io.Timestamp;
 const Utf8Iterator = std.unicode.Utf8Iterator;
 
@@ -11,8 +12,11 @@ const Level = Lesson.Level;
 const Transition = @import("scene.zig").Transition;
 const common = @import("common.zig");
 
-lesson: Lesson = undefined,
 level: Level = undefined,
+limit_time: bool = undefined,
+sudden_death: bool = undefined,
+
+lesson: Lesson = undefined,
 
 correct: u32 = 0,
 miss: u32 = 0,
@@ -28,12 +32,24 @@ damage_alpha: f32 = 0,
 
 typed_keys: ArrayList(u8),
 start: Timestamp = undefined,
+deadline: Timestamp = undefined,
+remaining: Duration = undefined,
 
 kana_iter: Utf8Iterator = undefined,
 highlight: rl.Rectangle = undefined,
 
 se_correct: rl.Sound = undefined,
 se_miss: rl.Sound = undefined,
+
+const time_limit = 5500;
+
+const UpdateExerciseResult = enum {
+    no_input,
+    incorrect_input,
+    updated,
+    completed,
+    timeout,
+};
 
 pub fn init(gpa: Allocator) !@This() {
     return .{
@@ -55,8 +71,10 @@ pub fn enter(
     io: Io,
     data: Transition.Data(@This()),
 ) !void {
-    self.lesson = try .init(gpa, io, data.level);
     self.level = data.level;
+    self.limit_time = data.limit_time;
+    self.sudden_death = data.sudden_death;
+    self.lesson = try .init(gpa, io, data.level, data.ex_quota);
     self.correct = 0;
     self.miss = 0;
     self.combo = 0;
@@ -67,6 +85,8 @@ pub fn enter(
     self.clearTypedKeys();
     self.resetHighlight();
     self.start = .now(io, .awake);
+    self.remaining = .fromMilliseconds(time_limit);
+    self.deadline = self.start.addDuration(self.remaining);
 }
 
 pub fn leave(self: *@This(), gpa: Allocator) void {
@@ -96,18 +116,38 @@ fn clearTypedKeys(self: *@This()) void {
     self.typed_keys.appendAssumeCapacity(0); // Append sentinel.
 }
 
-fn updateExercise(self: *@This(), key: u8) bool {
+fn isExerciseTimeout(self: *@This(), io: Io) bool {
+    if (!self.limit_time) return false;
+    self.remaining = Timestamp.now(io, .awake).durationTo(self.deadline);
+    return self.remaining.nanoseconds < 0;
+}
+
+fn isExerciseComplete(self: *@This()) bool {
+    return self.lesson.getExercise().getState().accept;
+}
+
+fn updateExercise(self: *@This(), io: Io) UpdateExerciseResult {
+    if (self.isExerciseTimeout(io)) {
+        self.combo = 0;
+        return .timeout;
+    }
+
+    const key: u8 = @intCast(rl.getCharPressed());
+    if (key == 0) return .no_input;
+
     const ex = self.lesson.getExercise();
 
     if (ex.getState().transition(key)) |next| {
         ex.current_state = next;
         self.onCorrectInput(key);
+
         const len = ex.getState().fragment_len;
         if (len > 0) {
             self.incrementCombo();
             self.updateHighlight(len);
         }
-        return true;
+
+        return if (self.isExerciseComplete()) .completed else .updated;
     }
 
     // Epsilon transition.
@@ -119,14 +159,15 @@ fn updateExercise(self: *@This(), key: u8) bool {
                 self.onCorrectInput(key);
                 self.incrementCombo();
                 self.updateHighlight(ex.states[epsilon].fragment_len);
-                return true;
+
+                return if (self.isExerciseComplete()) .completed else .updated;
             }
         },
     }
 
     self.onIncorrectInput();
     self.combo = 0;
-    return false;
+    return .incorrect_input;
 }
 
 fn goNextExercise(self: *@This()) bool {
@@ -199,46 +240,51 @@ pub fn update(self: *@This(), io: Io) !Transition {
         return .to_select;
     }
 
-    const key: u8 = @intCast(rl.getCharPressed());
-    if (key == 0) return .none; // No key is pressed.
+    switch (self.updateExercise(io)) {
+        .no_input,
+        .incorrect_input,
+        .updated,
+        => return .none,
 
-    if (self.updateExercise(key)) {
-        if (self.lesson.getExercise().getState().accept) {
-            if (self.goNextExercise()) {
-                self.clearTypedKeys();
-                self.resetHighlight();
-            } else {
-                const time = Timestamp.untilNow(self.start, io, .awake);
-                const kps = std.time.ns_per_s * @as(
-                    f32,
-                    @floatFromInt(self.correct),
-                ) / @as(
-                    f32,
-                    @floatFromInt(time.nanoseconds),
-                );
-                const penalty = @as(
-                    u32,
-                    @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.miss)))),
-                ) * 10;
-                const score = @as(
-                    u32,
-                    @intFromFloat(kps * 100),
-                ) + self.combo_bonus -| penalty;
+        .completed,
+        .timeout,
+        => {},
+    }
 
-                // Go to result scene.
-                return .{
-                    .to_result = .{
-                        .level = self.level,
-                        .correct = self.correct,
-                        .miss = self.miss,
-                        .max_combo = self.max_combo,
-                        .time = time,
-                        .kps = kps,
-                        .score = score,
-                    },
-                };
-            }
-        }
+    if (self.goNextExercise()) {
+        self.clearTypedKeys();
+        self.resetHighlight();
+        self.deadline = Timestamp.now(io, .awake).addDuration(.fromMilliseconds(time_limit));
+    } else {
+        const time = Timestamp.untilNow(self.start, io, .awake);
+        const kps = std.time.ns_per_s * @as(
+            f32,
+            @floatFromInt(self.correct),
+        ) / @as(
+            f32,
+            @floatFromInt(time.nanoseconds),
+        );
+        const penalty = @as(
+            u32,
+            @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.miss)))),
+        ) * 10;
+        const score = @as(
+            u32,
+            @intFromFloat(kps * 100),
+        ) + self.combo_bonus -| penalty;
+
+        // Go to result scene.
+        return .{
+            .to_result = .{
+                .level = self.level,
+                .correct = self.correct,
+                .miss = self.miss,
+                .max_combo = self.max_combo,
+                .time = time,
+                .kps = kps,
+                .score = score,
+            },
+        };
     }
 
     return .none;
@@ -263,6 +309,17 @@ pub fn draw(self: *@This()) void {
     common.drawText(ex.display, .{ .x = 400, .y = 240 }, .center_middle, 44, .black);
     common.drawText(ex.kana, .{ .x = 400, .y = 290 }, .center_middle, 32, .dark_gray);
     common.drawText(text, .{ .x = 400, .y = 340 }, .center_middle, 32, .black);
+
+    if (self.limit_time) {
+        const width: i32 = @intCast(@divTrunc(500 * self.remaining.toMilliseconds(), time_limit));
+        rl.drawRectangle(
+            400 - @divTrunc(width, 2),
+            550,
+            width,
+            10,
+            .green,
+        );
+    }
 
     if (self.damage_alpha > 0.0) {
         rl.drawRectangle(

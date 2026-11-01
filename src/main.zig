@@ -6,8 +6,9 @@ const Io = std.Io;
 
 const Scene = @import("scene.zig").Scene;
 const Transition = @import("scene.zig").Transition;
-const Title = @import("title.zig");
-const Select = @import("select.zig");
+const Title = @import("Title.zig");
+const Select = @import("Select.zig");
+const Setup = @import("Setup.zig");
 const Play = @import("Play.zig");
 const Result = @import("Result.zig");
 const common = @import("common.zig");
@@ -16,6 +17,7 @@ const windows = @import("windows.zig");
 
 var title: Title = undefined;
 var select: Select = undefined;
+var setup: Setup = undefined;
 var play: Play = undefined;
 var result: Result = undefined;
 var current_scene: Scene = .{ .title = &title };
@@ -24,6 +26,7 @@ fn update(gpa: Allocator, io: Io) !void {
     const transition = switch (current_scene) {
         .title => try title.update(),
         .select => try select.update(),
+        .setup => try setup.update(),
         .play => try play.update(io),
         .result => try result.update(),
     };
@@ -34,6 +37,7 @@ fn update(gpa: Allocator, io: Io) !void {
     current_scene = switch (transition) {
         .to_title => .{ .title = &title },
         .to_select => .{ .select = &select },
+        .to_setup => .{ .setup = &setup },
         .to_play => .{ .play = &play },
         .to_result => .{ .result = &result },
         .none => unreachable,
@@ -45,6 +49,7 @@ fn draw() void {
     switch (current_scene) {
         .title => title.draw(),
         .select => select.draw(),
+        .setup => setup.draw(),
         .play => play.draw(),
         .result => result.draw(),
     }
@@ -53,6 +58,7 @@ fn draw() void {
 fn initScenes(gpa: Allocator) !void {
     title = try .init(gpa);
     select = try .init(gpa);
+    setup = try .init(gpa);
     play = try .init(gpa);
     result = try .init(gpa);
 }
@@ -60,6 +66,7 @@ fn initScenes(gpa: Allocator) !void {
 fn deinitScenes(gpa: Allocator) void {
     title.deinit(gpa);
     select.deinit(gpa);
+    setup.deinit(gpa);
     play.deinit(gpa);
     result.deinit(gpa);
 }

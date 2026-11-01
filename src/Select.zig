@@ -8,17 +8,12 @@ const Transition = @import("scene.zig").Transition;
 const common = @import("common.zig");
 
 cursor: u8 = 0,
-se_cursor: rl.Sound = undefined,
 
 pub fn init(_: Allocator) !@This() {
-    return .{
-        .se_cursor = try rl.loadSound("res/se/cursor.ogg"),
-    };
+    return .{};
 }
 
-pub fn deinit(self: *@This(), _: Allocator) void {
-    self.se_cursor.unload();
-}
+pub fn deinit(_: *@This(), _: Allocator) void {}
 
 pub fn enter(
     _: *@This(),
@@ -33,16 +28,16 @@ pub fn update(self: *@This()) !Transition {
     switch (rl.getKeyPressed()) {
         .w, .up => {
             self.cursor = @mod(self.cursor + 2, 3);
-            rl.playSound(self.se_cursor);
+            rl.playSound(common.se_cursor);
         },
         .s, .down => {
             self.cursor = @mod(self.cursor + 1, 3);
-            rl.playSound(self.se_cursor);
+            rl.playSound(common.se_cursor);
         },
         .space => {
             rl.playSound(common.se_confirm);
             return .{
-                .to_play = .{ .level = @fromBackingInt(self.cursor) },
+                .to_setup = .{ .level = @fromBackingInt(self.cursor) },
             };
         },
         .escape => {
@@ -70,9 +65,11 @@ pub fn draw(self: *@This()) void {
         );
     }
 
-    common.drawBlinkingText2(
-        "\u{e003}/\u{e004} or \u{e002}/\u{e001} で選択",
-        "\u{e000} で決定",
+    common.drawBlinkingText(
+        &.{
+            "\u{e006}/\u{e008} or \u{e004}/\u{e003} で移動",
+            "\u{e000} で決定",
+        },
         .{ .x = 400, .y = 540 },
         .center_middle,
         32,

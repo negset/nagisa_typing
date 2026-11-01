@@ -6,6 +6,7 @@ const rl = @import("raylib");
 pub var font: rl.Font = undefined;
 pub var se_confirm: rl.Sound = undefined;
 pub var se_back: rl.Sound = undefined;
+pub var se_cursor: rl.Sound = undefined;
 pub var should_close = false;
 
 pub fn init() !void {
@@ -14,20 +15,24 @@ pub fn init() !void {
     rl.setTextLineSpacing(20);
     se_confirm = try rl.loadSound("res/se/confirm.ogg");
     se_back = try rl.loadSound("res/se/back.ogg");
+    se_cursor = try rl.loadSound("res/se/cursor.ogg");
 }
 
 pub fn deinit() void {
     font.unload();
     se_confirm.unload();
     se_back.unload();
+    se_cursor.unload();
 }
 
 pub const TextAlign = enum {
     center_middle,
-    left_bottom,
     left_top,
-    right_bottom,
+    left_middle,
+    left_bottom,
     right_top,
+    right_middle,
+    right_bottom,
 };
 
 pub fn drawText(
@@ -40,40 +45,32 @@ pub fn drawText(
     const rect = rl.measureTextEx(font, text, size, 0);
     const offset = rect.multiply(switch (text_align) {
         .center_middle => .{ .x = -0.5, .y = -0.5 },
-        .left_bottom => .{ .x = 0, .y = -1.0 },
         .left_top => .{ .x = 0, .y = 0 },
-        .right_bottom => .{ .x = -1.0, .y = -1.0 },
+        .left_middle => .{ .x = 0, .y = -0.5 },
+        .left_bottom => .{ .x = 0, .y = -1.0 },
         .right_top => .{ .x = -1.0, .y = 0 },
+        .right_middle => .{ .x = -1.0, .y = -0.5 },
+        .right_bottom => .{ .x = -1.0, .y = -1.0 },
     });
     rl.drawTextEx(font, text, pos.add(offset), size, 0, color);
 }
 
 pub fn drawBlinkingText(
-    text: [:0]const u8,
+    texts: []const [:0]const u8,
     pos: rl.Vector2,
     text_align: TextAlign,
     size: f32,
     color: rl.Color,
 ) void {
-    const time = rl.getTime();
-    const duration = 2.0;
-    const alpha: f32 = @floatCast(@abs(@sin(pi * time / duration)));
-    drawText(text, pos, text_align, size, color.fade(@floatCast(alpha)));
-}
+    if (texts.len == 0) return;
 
-pub fn drawBlinkingText2(
-    text1: [:0]const u8,
-    text2: [:0]const u8,
-    pos: rl.Vector2,
-    text_align: TextAlign,
-    size: f32,
-    color: rl.Color,
-) void {
     const time = rl.getTime();
     const duration = 2.0;
-    const text = if (@mod(time, 2 * duration) < duration) text1 else text2;
+    const phase = @mod(time, duration * @as(f64, @floatFromInt(texts.len)));
+    const index: usize = @intFromFloat(@floor(phase / duration));
     const alpha: f32 = @floatCast(@abs(@sin(pi * time / duration)));
-    drawText(text, pos, text_align, size, color.fade(alpha));
+
+    drawText(texts[index], pos, text_align, size, color.fade(alpha));
 }
 
 pub fn requestExit() void {

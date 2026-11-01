@@ -58,7 +58,7 @@ pub const Level = enum(u8) {
     }
 };
 
-pub fn init(gpa: Allocator, io: Io, level: Level) !@This() {
+pub fn init(gpa: Allocator, io: Io, level: Level, ex_quota: u32) !@This() {
     const data = loader.getData(level);
 
     const rand_source: Random.IoSource = .{ .io = io };
@@ -73,7 +73,6 @@ pub fn init(gpa: Allocator, io: Io, level: Level) !@This() {
 
     rand.shuffle(usize, indices);
 
-    const ex_quota = @min(data.len, 20);
     const exercises = try gpa.alloc(Exercise, ex_quota);
     errdefer gpa.free(exercises);
 

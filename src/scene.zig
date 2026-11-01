@@ -3,8 +3,9 @@ const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const Duration = Io.Duration;
 
-const Title = @import("title.zig");
-const Select = @import("select.zig");
+const Title = @import("Title.zig");
+const Select = @import("Select.zig");
+const Setup = @import("Setup.zig");
 const Play = @import("Play.zig");
 const Result = @import("Result.zig");
 const Level = @import("Lesson.zig").Level;
@@ -12,6 +13,7 @@ const Level = @import("Lesson.zig").Level;
 pub const Scene = union(enum) {
     title: *Title,
     select: *Select,
+    setup: *Setup,
     play: *Play,
     result: *Result,
 
@@ -19,6 +21,7 @@ pub const Scene = union(enum) {
         switch (self) {
             .title => |scene| try scene.enter(gpa, io, t.to_title),
             .select => |scene| try scene.enter(gpa, io, t.to_select),
+            .setup => |scene| try scene.enter(gpa, io, t.to_setup),
             .play => |scene| try scene.enter(gpa, io, t.to_play),
             .result => |scene| try scene.enter(gpa, io, t.to_result),
         }
@@ -28,6 +31,7 @@ pub const Scene = union(enum) {
         switch (self) {
             .title => |scene| scene.leave(gpa),
             .select => |scene| scene.leave(gpa),
+            .setup => |scene| scene.leave(gpa),
             .play => |scene| scene.leave(gpa),
             .result => |scene| scene.leave(gpa),
         }
@@ -38,6 +42,7 @@ pub const Transition = union(enum) {
     none,
     to_title: Data(Title),
     to_select: Data(Select),
+    to_setup: Data(Setup),
     to_play: Data(Play),
     to_result: Data(Result),
 
@@ -45,7 +50,13 @@ pub const Transition = union(enum) {
         return switch (T) {
             Title => void,
             Select => void,
-            Play => struct { level: Level },
+            Setup => struct { level: Level },
+            Play => struct {
+                level: Level,
+                ex_quota: u32,
+                limit_time: bool,
+                sudden_death: bool,
+            },
             Result => struct {
                 level: Level,
                 correct: u32,
