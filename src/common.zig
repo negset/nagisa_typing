@@ -85,10 +85,9 @@ pub fn drawCursor(
     const time = rl.getTime();
     const duration = 0.5;
     const offset: f32 = @floatCast(5 * @sin(pi * time / duration));
-    drawText(">>", .{ .x = x - offset, .y = y }, .right_middle, 28, .red);
-    drawText("<<", .{ .x = x + width + offset, .y = y }, .left_middle, 28, .red);
+    drawText("▶", .{ .x = x - offset, .y = y }, .right_middle, 20, .red);
+    drawText("◀", .{ .x = x + width + offset, .y = y }, .left_middle, 20, .red);
 }
-
 
 pub fn requestExit() void {
     if (comptime builtin.os.tag != .emscripten)
