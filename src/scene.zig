@@ -19,21 +19,41 @@ pub const Scene = union(enum) {
 
     pub fn enter(self: Scene, gpa: Allocator, io: Io, t: Transition) !void {
         switch (self) {
-            .title => |scene| try scene.enter(gpa, io, t.to_title),
-            .select => |scene| try scene.enter(gpa, io, t.to_select),
-            .setup => |scene| try scene.enter(gpa, io, t.to_setup),
-            .play => |scene| try scene.enter(gpa, io, t.to_play),
-            .result => |scene| try scene.enter(gpa, io, t.to_result),
+            .title => |title| try title.enter(gpa, io, t.to_title),
+            .select => |select| try select.enter(gpa, io, t.to_select),
+            .setup => |setup| try setup.enter(gpa, io, t.to_setup),
+            .play => |play| try play.enter(gpa, io, t.to_play),
+            .result => |result| try result.enter(gpa, io, t.to_result),
         }
     }
 
     pub fn leave(self: Scene, gpa: Allocator) void {
         switch (self) {
-            .title => |scene| scene.leave(gpa),
-            .select => |scene| scene.leave(gpa),
-            .setup => |scene| scene.leave(gpa),
-            .play => |scene| scene.leave(gpa),
-            .result => |scene| scene.leave(gpa),
+            .title => |title| title.leave(gpa),
+            .select => |select| select.leave(gpa),
+            .setup => |setup| setup.leave(gpa),
+            .play => |play| play.leave(gpa),
+            .result => |result| result.leave(gpa),
+        }
+    }
+
+    pub fn update(self: @This(), io: Io) Transition {
+        return switch (self) {
+            .title => |title| title.update(io),
+            .select => |select| select.update(io),
+            .setup => |setup| setup.update(io),
+            .play => |play| play.update(io),
+            .result => |result| result.update(io),
+        };
+    }
+
+    pub fn draw(self: @This()) void {
+        switch (self) {
+            .title => |title| title.draw(),
+            .select => |select| select.draw(),
+            .setup => |setup| setup.draw(),
+            .play => |play| play.draw(),
+            .result => |result| result.draw(),
         }
     }
 };
@@ -59,12 +79,16 @@ pub const Transition = union(enum) {
             },
             Result => struct {
                 level: Level,
+                ex_quota: u32,
+                limit_time: bool,
+                sudden_death: bool,
                 correct: u32,
                 miss: u32,
+                completed: u32,
                 max_combo: u32,
+                combo_bonus: u32,
                 time: Duration,
                 kps: f32,
-                score: u32,
             },
             else => @compileError("Unknown scene type."),
         };

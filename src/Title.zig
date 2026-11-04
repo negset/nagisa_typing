@@ -22,7 +22,7 @@ pub fn enter(
 
 pub fn leave(_: *@This(), _: Allocator) void {}
 
-pub fn update(_: *@This()) !Transition {
+pub fn update(_: *@This(), _: Io) Transition {
     switch (rl.getKeyPressed()) {
         .space => {
             rl.playSound(common.se_confirm);

@@ -13,6 +13,7 @@ const Transition = @import("scene.zig").Transition;
 const common = @import("common.zig");
 
 level: Level = undefined,
+ex_quota: u32 = undefined,
 limit_time: bool = undefined,
 sudden_death: bool = undefined,
 
@@ -20,17 +21,18 @@ lesson: Lesson = undefined,
 
 correct: u32 = 0,
 miss: u32 = 0,
-
+completed: u32 = 0,
 combo: u32 = 0,
 max_combo: u32 = 0,
 combo_bonus: u32 = 0,
+game_over: bool = false,
+
 combo_text: [:0]const u8 = undefined,
 combo_text_buf: [16]u8 = undefined,
-
 combo_alpha: f32 = 0,
 damage_alpha: f32 = 0,
-
 typed_keys: ArrayList(u8),
+
 start: Timestamp = undefined,
 deadline: Timestamp = undefined,
 remaining: Duration = undefined,
@@ -72,15 +74,18 @@ pub fn enter(
     data: Transition.Data(@This()),
 ) !void {
     self.level = data.level;
+    self.ex_quota = data.ex_quota;
     self.limit_time = data.limit_time;
     self.sudden_death = data.sudden_death;
     self.lesson = try .init(gpa, io, data.level, data.ex_quota);
     self.correct = 0;
     self.miss = 0;
+    self.completed = 0;
     self.combo = 0;
-    self.combo_alpha = 0;
     self.max_combo = 0;
     self.combo_bonus = 0;
+    self.game_over = false;
+    self.combo_alpha = 0;
     self.damage_alpha = 0;
     self.clearTypedKeys();
     self.resetHighlight();
@@ -129,6 +134,7 @@ fn isExerciseComplete(self: *@This()) bool {
 fn updateExercise(self: *@This(), io: Io) UpdateExerciseResult {
     if (self.isExerciseTimeout(io)) {
         self.combo = 0;
+        if (self.sudden_death) self.game_over = true;
         return .timeout;
     }
 
@@ -147,7 +153,12 @@ fn updateExercise(self: *@This(), io: Io) UpdateExerciseResult {
             self.updateHighlight(len);
         }
 
-        return if (self.isExerciseComplete()) .completed else .updated;
+        if (self.isExerciseComplete()) {
+            self.completed += 1;
+            return .completed;
+        } else {
+            return .updated;
+        }
     }
 
     // Epsilon transition.
@@ -160,13 +171,19 @@ fn updateExercise(self: *@This(), io: Io) UpdateExerciseResult {
                 self.incrementCombo();
                 self.updateHighlight(ex.states[epsilon].fragment_len);
 
-                return if (self.isExerciseComplete()) .completed else .updated;
+                if (self.isExerciseComplete()) {
+                    self.completed += 1;
+                    return .completed;
+                } else {
+                    return .updated;
+                }
             }
         },
     }
 
     self.onIncorrectInput();
     self.combo = 0;
+    if (self.sudden_death) self.game_over = true;
     return .incorrect_input;
 }
 
@@ -191,7 +208,7 @@ fn incrementCombo(self: *@This()) void {
             0,
         ) catch @panic("No space at combo_text_buf.");
 
-        self.combo_bonus += @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.combo))));
+        self.combo_bonus += @intFromFloat(@sqrt(@as(f32, @floatFromInt(100 * self.combo))));
         self.combo_alpha = 2.0;
     }
 }
@@ -231,7 +248,7 @@ fn updateHighlight(self: *@This(), len: usize) void {
     }
 }
 
-pub fn update(self: *@This(), io: Io) !Transition {
+pub fn update(self: *@This(), io: Io) Transition {
     self.combo_alpha = @max(0.0, self.combo_alpha - rl.getFrameTime() * 2.0);
     self.damage_alpha = @max(0.0, self.damage_alpha - rl.getFrameTime() * 1.0);
 
@@ -242,16 +259,18 @@ pub fn update(self: *@This(), io: Io) !Transition {
 
     switch (self.updateExercise(io)) {
         .no_input,
-        .incorrect_input,
         .updated,
         => return .none,
+
+        .incorrect_input,
+        => if (self.game_over) {} else return .none,
 
         .completed,
         .timeout,
         => {},
     }
 
-    if (self.goNextExercise()) {
+    if (self.goNextExercise() and !self.game_over) {
         self.clearTypedKeys();
         self.resetHighlight();
         self.deadline = Timestamp.now(io, .awake).addDuration(.fromMilliseconds(time_limit));
@@ -264,25 +283,21 @@ pub fn update(self: *@This(), io: Io) !Transition {
             f32,
             @floatFromInt(time.nanoseconds),
         );
-        const penalty = @as(
-            u32,
-            @intFromFloat(@sqrt(@as(f32, @floatFromInt(self.miss)))),
-        ) * 10;
-        const score = @as(
-            u32,
-            @intFromFloat(kps * 100),
-        ) + self.combo_bonus -| penalty;
 
         // Go to result scene.
         return .{
             .to_result = .{
                 .level = self.level,
+                .ex_quota = self.ex_quota,
+                .limit_time = self.limit_time,
+                .sudden_death = self.sudden_death,
                 .correct = self.correct,
                 .miss = self.miss,
+                .completed = self.completed,
                 .max_combo = self.max_combo,
+                .combo_bonus = self.combo_bonus,
                 .time = time,
                 .kps = kps,
-                .score = score,
             },
         };
     }

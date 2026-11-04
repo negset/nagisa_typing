@@ -22,15 +22,24 @@ var play: Play = undefined;
 var result: Result = undefined;
 var current_scene: Scene = .{ .title = &title };
 
-fn update(gpa: Allocator, io: Io) !void {
-    const transition = switch (current_scene) {
-        .title => try title.update(),
-        .select => try select.update(),
-        .setup => try setup.update(),
-        .play => try play.update(io),
-        .result => try result.update(),
-    };
+fn initScenes(gpa: Allocator) !void {
+    title = try .init(gpa);
+    select = try .init(gpa);
+    setup = try .init(gpa);
+    play = try .init(gpa);
+    result = try .init(gpa);
+}
 
+fn deinitScenes(gpa: Allocator) void {
+    title.deinit(gpa);
+    select.deinit(gpa);
+    setup.deinit(gpa);
+    play.deinit(gpa);
+    result.deinit(gpa);
+}
+
+fn update(gpa: Allocator, io: Io) !void {
+    const transition = current_scene.update(io);
     if (transition == .none) return;
 
     current_scene.leave(gpa);
@@ -46,29 +55,7 @@ fn update(gpa: Allocator, io: Io) !void {
 }
 
 fn draw() void {
-    switch (current_scene) {
-        .title => title.draw(),
-        .select => select.draw(),
-        .setup => setup.draw(),
-        .play => play.draw(),
-        .result => result.draw(),
-    }
-}
-
-fn initScenes(gpa: Allocator) !void {
-    title = try .init(gpa);
-    select = try .init(gpa);
-    setup = try .init(gpa);
-    play = try .init(gpa);
-    result = try .init(gpa);
-}
-
-fn deinitScenes(gpa: Allocator) void {
-    title.deinit(gpa);
-    select.deinit(gpa);
-    setup.deinit(gpa);
-    play.deinit(gpa);
-    result.deinit(gpa);
+    current_scene.draw();
 }
 
 pub fn main(init: std.process.Init) !void {

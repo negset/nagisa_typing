@@ -30,7 +30,7 @@ pub fn enter(
 
 pub fn leave(_: *@This(), _: Allocator) void {}
 
-pub fn update(self: *@This()) !Transition {
+pub fn update(self: *@This(), _: Io) Transition {
     switch (rl.getKeyPressed()) {
         .w, .up => {
             self.cursor = @mod(self.cursor + 2, 3);
@@ -98,23 +98,25 @@ pub fn draw(self: *@This()) void {
 
     {
         const color: rl.Color = if (self.cursor == 0) .red else .black;
-        common.drawText("出題数:", .{ .x = 180, .y = 270 }, .left_middle, 36, color);
+        common.drawText("出題数:", .{ .x = 200, .y = 270 }, .left_middle, 36, color);
         common.drawText("10", .{ .x = 440, .y = 270 }, .left_middle, 36, if (self.ex_quota == 10) color else .gray);
-        common.drawText("20", .{ .x = 530, .y = 270 }, .center_middle, 36, if (self.ex_quota == 20) color else .gray);
-        common.drawText("30", .{ .x = 620, .y = 270 }, .right_middle, 36, if (self.ex_quota == 30) color else .gray);
+        common.drawText("20", .{ .x = 520, .y = 270 }, .center_middle, 36, if (self.ex_quota == 20) color else .gray);
+        common.drawText("30", .{ .x = 600, .y = 270 }, .right_middle, 36, if (self.ex_quota == 30) color else .gray);
     }
     {
         const color: rl.Color = if (self.cursor == 1) .red else .black;
-        common.drawText("時間制限:", .{ .x = 180, .y = 330 }, .left_middle, 36, color);
+        common.drawText("時間制限:", .{ .x = 200, .y = 330 }, .left_middle, 36, color);
         common.drawText("OFF", .{ .x = 440, .y = 330 }, .left_middle, 36, if (!self.limit_time) color else .gray);
-        common.drawText("ON", .{ .x = 620, .y = 330 }, .right_middle, 36, if (self.limit_time) color else .gray);
+        common.drawText("ON", .{ .x = 600, .y = 330 }, .right_middle, 36, if (self.limit_time) color else .gray);
     }
     {
         const color: rl.Color = if (self.cursor == 2) .red else .black;
-        common.drawText("一発勝負:", .{ .x = 180, .y = 390 }, .left_middle, 36, color);
+        common.drawText("一発勝負:", .{ .x = 200, .y = 390 }, .left_middle, 36, color);
         common.drawText("OFF", .{ .x = 440, .y = 390 }, .left_middle, 36, if (!self.sudden_death) color else .gray);
-        common.drawText("ON", .{ .x = 620, .y = 390 }, .right_middle, 36, if (self.sudden_death) color else .gray);
+        common.drawText("ON", .{ .x = 600, .y = 390 }, .right_middle, 36, if (self.sudden_death) color else .gray);
     }
+
+    common.drawCursor(170, 270 + 60 * @as(f32, @floatFromInt(self.cursor)), 460);
 
     common.drawBlinkingText(
         &.{

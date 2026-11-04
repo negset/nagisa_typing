@@ -26,7 +26,9 @@ pub fn deinit() void {
 }
 
 pub const TextAlign = enum {
+    center_top,
     center_middle,
+    center_bottom,
     left_top,
     left_middle,
     left_bottom,
@@ -44,7 +46,9 @@ pub fn drawText(
 ) void {
     const rect = rl.measureTextEx(font, text, size, 0);
     const offset = rect.multiply(switch (text_align) {
+        .center_top => .{ .x = -0.5, .y = 0 },
         .center_middle => .{ .x = -0.5, .y = -0.5 },
+        .center_bottom => .{ .x = -0.5, .y = -1.0 },
         .left_top => .{ .x = 0, .y = 0 },
         .left_middle => .{ .x = 0, .y = -0.5 },
         .left_bottom => .{ .x = 0, .y = -1.0 },
@@ -72,6 +76,19 @@ pub fn drawBlinkingText(
 
     drawText(texts[index], pos, text_align, size, color.fade(alpha));
 }
+
+pub fn drawCursor(
+    x: f32,
+    y: f32,
+    width: f32,
+) void {
+    const time = rl.getTime();
+    const duration = 0.5;
+    const offset: f32 = @floatCast(5 * @sin(pi * time / duration));
+    drawText(">>", .{ .x = x - offset, .y = y }, .right_middle, 28, .red);
+    drawText("<<", .{ .x = x + width + offset, .y = y }, .left_middle, 28, .red);
+}
+
 
 pub fn requestExit() void {
     if (comptime builtin.os.tag != .emscripten)

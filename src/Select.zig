@@ -24,7 +24,7 @@ pub fn enter(
 
 pub fn leave(_: *@This(), _: Allocator) void {}
 
-pub fn update(self: *@This()) !Transition {
+pub fn update(self: *@This(), _: Io) Transition {
     switch (rl.getKeyPressed()) {
         .w, .up => {
             self.cursor = @mod(self.cursor + 2, 3);
@@ -55,15 +55,18 @@ pub fn draw(self: *@This()) void {
 
     inline for (0..3) |i| {
         const level: Level = @fromBackingInt(@intCast(i));
+        const y = 220 + 80 * i;
         const color: rl.Color = if (self.cursor == i) .red else .black;
         common.drawText(
             level.toString(),
-            .{ .x = 400, .y = 220 + i * 80 },
+            .{ .x = 400, .y = y },
             .center_middle,
             36,
             color,
         );
     }
+
+    common.drawCursor(320, 220 + 80 * @as(f32, @floatFromInt(self.cursor)), 160);
 
     common.drawBlinkingText(
         &.{
