@@ -83,8 +83,8 @@ pub fn drawCursor(
     width: f32,
 ) void {
     const time = rl.getTime();
-    const duration = 0.5;
-    const offset: f32 = @floatCast(5 * @sin(pi * time / duration));
+    const duration = 0.8;
+    const offset: f32 = @floatCast(10 * @abs(@sin(pi * time / duration)));
     drawText("▶", .{ .x = x - offset, .y = y }, .right_middle, 20, .red);
     drawText("◀", .{ .x = x + width + offset, .y = y }, .left_middle, 20, .red);
 }

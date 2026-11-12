@@ -66,7 +66,7 @@ pub fn draw(self: *@This()) void {
         );
     }
 
-    common.drawCursor(320, 220 + 80 * @as(f32, @floatFromInt(self.cursor)), 160);
+    common.drawCursor(330, 220 + 80 * @as(f32, @floatFromInt(self.cursor)), 140);
 
     common.drawBlinkingText(
         &.{

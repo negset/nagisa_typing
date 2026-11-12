@@ -116,7 +116,7 @@ pub fn draw(self: *@This()) void {
         common.drawText("ON", .{ .x = 600, .y = 390 }, .right_middle, 36, if (self.sudden_death) color else .gray);
     }
 
-    common.drawCursor(170, 270 + 60 * @as(f32, @floatFromInt(self.cursor)), 460);
+    common.drawCursor(180, 270 + 60 * @as(f32, @floatFromInt(self.cursor)), 440);
 
     common.drawBlinkingText(
         &.{
