@@ -32,12 +32,13 @@ jobs:
       - name: Package
         run: |
           PACKAGE="${NAME}-x86_64-windows-${TAG}.zip"
+          mv "zig-out/bin/${NAME}.exe" .
           zip -r "$PACKAGE" \
             res/ \
             LICENSE \
             README.md \
             THIRD_PARTY_NOTICES \
-            "zig-out/bin/${NAME}.exe"
+            "${NAME}.exe"
           echo "PACKAGE=$PACKAGE" >> "$GITHUB_ENV"
 
       - name: Create release
