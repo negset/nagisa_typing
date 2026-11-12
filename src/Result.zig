@@ -61,7 +61,7 @@ pub fn enter(
     data: Transition.Data(@This()),
 ) !void {
     const suffix = if (data.limit_time and data.sudden_death)
-        " (時間制限＋一発勝負)"
+        " (時間制限＆一発勝負)"
     else if (data.limit_time)
         " (時間制限)"
     else if (data.sudden_death)
