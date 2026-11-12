@@ -1,0 +1,46 @@
+name: Build Windows and create release
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  NAME: ${{ github.event.repository.name }}
+  TAG: ${{ github.ref_name }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Zig
+        run: |
+          curl -fL https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz -o zig.tar.xz
+          tar -xf zig.tar.xz
+          echo "$GITHUB_WORKSPACE/zig-x86_64-linux-0.17.1" >> "$GITHUB_PATH"
+
+      - name: Build Windows x86_64
+        run: zig build -Dtarget=x86_64-windows --release=small
+
+      - name: Package
+        run: |
+          PACKAGE="${NAME}-x86_64-windows-${TAG}.zip"
+          zip -r "$PACKAGE" \
+            res/ \
+            LICENSE \
+            README.md \
+            THIRD_PARTY_NOTICES \
+            "zig-out/bin/${NAME}.exe"
+          echo "PACKAGE=$PACKAGE" >> "$GITHUB_ENV"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: ${{ env.PACKAGE }}
