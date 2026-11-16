@@ -60,7 +60,7 @@ pub fn enter(
     _: Io,
     data: Transition.Data(@This()),
 ) !void {
-    const suffix = if (data.limit_time and data.sudden_death)
+    const title_suffix = if (data.limit_time and data.sudden_death)
         " (時間制限＆一発勝負)"
     else if (data.limit_time)
         " (時間制限)"
@@ -68,17 +68,22 @@ pub fn enter(
         " (一発勝負)"
     else
         "";
+
+    const total_seconds: u64 = @intCast(data.time.toSeconds());
+    const minutes = @divTrunc(total_seconds, 60);
+    const seconds = @mod(total_seconds, 60);
+
     self.title = try std.fmt.allocPrintSentinel(
         gpa,
         "{s}{s}",
-        .{ data.level.toString(), suffix },
+        .{ data.level.toString(), title_suffix },
         0,
     );
     self.score = try std.fmt.allocPrintSentinel(gpa, "{d:.0}", .{calcScore(data)}, 0);
     self.completed = try std.fmt.allocPrintSentinel(gpa, "{}/{}", .{ data.completed, data.ex_quota }, 0);
     self.input = try std.fmt.allocPrintSentinel(gpa, "正 {} 誤 {}", .{ data.correct, data.miss }, 0);
     self.max_combo = try std.fmt.allocPrintSentinel(gpa, "{}", .{data.max_combo}, 0);
-    self.time = try std.fmt.allocPrintSentinel(gpa, "{f}", .{data.time}, 0);
+    self.time = try std.fmt.allocPrintSentinel(gpa, "{d}:{d:0>2}", .{ minutes, seconds }, 0);
     self.kps = try std.fmt.allocPrintSentinel(gpa, "{d:.3} KPS", .{data.kps}, 0);
 }
 

@@ -276,13 +276,9 @@ pub fn update(self: *@This(), io: Io) Transition {
         self.deadline = Timestamp.now(io, .awake).addDuration(.fromMilliseconds(time_limit));
     } else {
         const time = Timestamp.untilNow(self.start, io, .awake);
-        const kps = std.time.ns_per_s * @as(
-            f32,
-            @floatFromInt(self.correct),
-        ) / @as(
-            f32,
-            @floatFromInt(time.nanoseconds),
-        );
+        var kps: f32 = std.time.ns_per_s;
+        kps *= @floatFromInt(self.correct);
+        kps /= @floatFromInt(time.nanoseconds);
 
         // Go to result scene.
         return .{
